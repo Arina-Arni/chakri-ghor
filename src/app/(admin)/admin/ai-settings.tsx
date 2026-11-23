@@ -57,7 +57,7 @@ export function AiHealthScreen() {
   const failCols: Column<AiHealthStats["failures"][number]>[] = [
     { id: "at", header: t("admin.aiHealth.colTime"), sortValue: (f) => f.at, cell: (f) => <span className="whitespace-nowrap">{formatDateTimeBn(f.at)}</span> },
     { id: "feature", header: t("admin.aiHealth.colFeature"), primary: true, sortValue: (f) => f.feature, cell: (f) => t(`enums.aiFeature.${f.feature}`) },
-    { id: "outcome", header: t("admin.aiHealth.colOutcome"), sortValue: (f) => f.outcome, cell: (f) => <Badge size="sm" variant={f.outcome === "fallback" ? "info" : "danger"}>{t(`enums.faultMode.${f.outcome}`)}</Badge> },
+    { id: "outcome", header: t("admin.aiHealth.colOutcome"), sortValue: (f) => f.outcome, cell: (f) => <Badge size="sm" variant={f.outcome === "fallback_used" || f.outcome === "circuit_open" ? "info" : "danger"}>{t(`enums.aiOutcome.${f.outcome}`)}</Badge> },
     { id: "attempts", header: t("admin.aiHealth.colAttempts"), sortValue: (f) => f.attempts, cell: (f) => toBnDigits(f.attempts) },
     { id: "latency", header: t("admin.aiHealth.colLatency"), sortValue: (f) => f.latencyMs, cell: (f) => t("admin.aiHealth.ms", { n: formatNumberBn(f.latencyMs) }) },
     { id: "msg", header: t("admin.aiHealth.colMessage"), cell: (f) => <span className="font-mono text-xs" lang="en">{f.message}</span> },

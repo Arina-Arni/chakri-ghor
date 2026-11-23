@@ -2,7 +2,14 @@
 
 import { z } from "zod";
 import { adminRoleSchema, circularActionPayload, circularPayload, organizationPayload, quotasPayload } from "@/schemas/api";
+import { WORKFLOW_STEPS } from "@/types";
 import type {
+  AiFeature,
+  AiHealthStats,
+  FaultMode,
+  WorkflowAction,
+  WorkflowRun,
+  WorkflowStepCode,
   AdminCircularRow,
   AdminSettings,
   AdminUser,
@@ -12,11 +19,14 @@ import type {
   Organization,
   Result,
 } from "@/types";
-import { act } from "@/server/api/act";
+import { after } from "next/server";
+import { act, actDirect } from "@/server/api/act";
 import { parse } from "@/server/api/validate";
 import { requireUser } from "@/server/authz";
 import { verifyPassword } from "@/server/supabase";
 import * as admin from "@/server/services/admin";
+import * as aiHealth from "@/server/services/ai-health";
+import * as workflows from "@/server/services/workflows";
 import * as circulars from "@/server/services/circulars";
 import { invalidateAdminDashboard } from "@/server/services/dashboards";
 
@@ -108,5 +118,45 @@ export async function setFeatureFlagAction(flag: keyof FeatureFlags, value: bool
 export async function savePlanSettingsAction(quotas: AdminSettings["quotas"], premiumPriceBdt: number, k: string): Promise<Result<AdminSettings>> {
   return act("settings.plans", k, { quotas, premiumPriceBdt }, (ctx, tx) =>
     admin.savePlanSettings(ctx, tx, parse(quotasPayload, quotas) as AdminSettings["quotas"], parse(z.number().int().min(0).max(10_000), premiumPriceBdt)),
+  );
+}
+
+// ───────── Part 3: workflow & AI health ─────────
+
+export async function workflowActionAction(
+  runId: string,
+  action: WorkflowAction,
+  payload: { step?: WorkflowStepCode; reason?: string; json?: string },
+  k: string,
+): Promise<Result<WorkflowRun>> {
+  const r = await act("workflow.action", k, { runId, action, payload }, (ctx, tx) =>
+    workflows.workflowAction(
+      ctx,
+      tx,
+      parse(id, runId),
+      parse(z.enum(["retry_step", "run_from_step", "skip_step", "cancel_run", "fix_and_run"]), action),
+      parse(z.object({ step: z.enum(WORKFLOW_STEPS).optional(), reason: z.string().trim().max(500).optional(), json: z.string().max(200_000).optional() }), payload),
+    ),
+  );
+  if (r.ok && r.data.status === "running") after(() => workflows.runWorker(undefined, { runId, limit: 15 }).then(() => undefined));
+  return r;
+}
+
+/** Admin "Run now": process due steps immediately. */
+export async function runWorkerNowAction(): Promise<Result<{ processed: number }>> {
+  return actDirect(async (ctx) => {
+    requireUser(ctx.actor, "circular.moderate", { mutation: true });
+    return { processed: await workflows.runWorker(undefined, { limit: 30 }) };
+  });
+}
+
+export async function setFaultInjectionAction(feature: AiFeature | null, mode: FaultMode | null, k: string): Promise<Result<AiHealthStats["faultInjection"]>> {
+  return act("ai.fault", k, { feature, mode }, (ctx, tx) =>
+    aiHealth.setFaultInjection(
+      ctx,
+      tx,
+      feature == null ? null : parse(z.enum(["search_parse", "cv_parse", "resume_tailor", "circular_extract", "tagging"]), feature),
+      mode == null ? null : parse(z.enum(["timeout", "malformed_json", "wrong_schema", "hallucinated_values", "rate_limited_429", "server_error_500"]), mode),
+    ),
   );
 }

@@ -6,6 +6,8 @@ import type { Ctx } from "@/server/context";
 import type { Db } from "@/server/db/client";
 import * as account from "@/server/services/account";
 import * as admin from "@/server/services/admin";
+import * as aiHealth from "@/server/services/ai-health";
+import * as workflows from "@/server/services/workflows";
 import * as applications from "@/server/services/applications";
 import * as billing from "@/server/services/billing";
 import * as circularsSvc from "@/server/services/circulars";
@@ -76,6 +78,10 @@ export const READS: Record<string, Handler> = {
   listReviewQueue: h(none, (ctx, db) => circularsSvc.listReviewQueue(ctx, db)),
   getReviewItem: h(oneId, (ctx, db, [id]) => circularsSvc.getReviewItem(ctx, db, id)),
   getFeatureFlags: h(none, (ctx, db) => admin.getFeatureFlags(ctx, db)),
+  listWorkflowRuns: h(z.tuple([z.object({ status: z.string().max(30).optional() }).optional()]), (ctx, db, [f]) => workflows.listWorkflowRuns(ctx, db, f ?? {})),
+  getWorkflowRun: h(oneId, (ctx, db, [id]) => workflows.getWorkflowRun(ctx, db, id)),
+  getAiHealth: h(z.tuple([z.enum(["24h", "7d"])]), (ctx, db, [period]) => aiHealth.getAiHealth(ctx, db, period)),
+  getFaultInjection: h(none, (ctx, db) => aiHealth.getFaultInjection(ctx, db)),
 
   // admin only
   listUsers: h(z.tuple([z.object({ q: z.string().max(100).optional(), role: z.string().max(20).optional() }).optional()]), (ctx, db, [f]) =>

@@ -21,7 +21,7 @@ import { useData } from "@/hooks/use-data";
 import { useMutation } from "@/hooks/use-mutation";
 import { t } from "@/i18n";
 
-const STATUS_TONE = { none: "neutral", trialing: "info", active: "success", grace: "warning", expired: "danger" } as const;
+const STATUS_TONE = { none: "neutral", trialing: "info", active: "success", past_due: "warning", grace: "warning", expired: "danger" } as const;
 
 export function BillingScreen() {
   const q = useData(() => getBilling(), []);

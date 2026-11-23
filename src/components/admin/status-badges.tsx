@@ -1,4 +1,4 @@
-import { Ban, CheckCircle2, CircleDashed, Loader2, PauseCircle, Redo2, XCircle } from "lucide-react";
+import { Ban, CheckCircle2, Copy, CircleDashed, Loader2, PauseCircle, Redo2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { t } from "@/i18n";
 import type { CircularStatus, WorkflowRunStatus, WorkflowStepStatus } from "@/types";
@@ -24,6 +24,7 @@ const RUN = {
   failed: ["danger", XCircle],
   waiting_review: ["warning", PauseCircle],
   cancelled: ["neutral", Ban],
+  duplicate: ["neutral", Copy],
 } as const;
 
 export function RunStatusBadge({ status }: { status: WorkflowRunStatus }) {

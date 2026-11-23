@@ -7,7 +7,8 @@ import { writeAudit } from "@/server/audit";
 import type { Ctx } from "@/server/context";
 import type { DbOrTx, Tx } from "@/server/db/client";
 import { authUsers } from "@/server/db/auth-schema";
-import { appSettings, auditLogs, circulars, organizations, profiles } from "@/server/db/schema";
+import { auditLogs, circulars, featureFlags, organizations, plans, profiles } from "@/server/db/schema";
+import { DEFAULT_PLANS } from "@/server/quota";
 import { AppError } from "@/server/errors";
 import { toOrganization } from "./discovery";
 
@@ -164,34 +165,25 @@ export async function listAuditLogs(ctx: Ctx, db: DbOrTx, f: { actor?: string; a
   }));
 }
 
-// ───────── settings (flags, quotas) ─────────
+// ───────── settings (feature flags, plan quotas) ─────────
 
-export const DEFAULT_SETTINGS: AdminSettings = {
-  flags: { autoPublish: false, aiSearch: true, aiCvParse: true, aiResumeTailor: true, aiCircularExtract: true },
-  quotas: {
-    free: { aiSearchPerDay: 10, resumeTailorPerDay: 1, cvParsePerDay: 2 },
-    premium: { aiSearchPerDay: 100, resumeTailorPerDay: 10, cvParsePerDay: 10 },
-  },
-  /** Per day (spec Part 3 plans). */
-  premiumPriceBdt: 4,
-};
+export { DEFAULT_FLAGS } from "./admin-defaults";
+import { DEFAULT_FLAGS } from "./admin-defaults";
 
+/** Flags from `feature_flags`, plan quotas and price from `plans` (defaults when unseeded). */
 export async function readSettings(db: DbOrTx): Promise<AdminSettings> {
-  const rows = await db.select().from(appSettings);
-  const by = new Map(rows.map((r) => [r.key, r.value]));
-  return {
-    flags: { ...DEFAULT_SETTINGS.flags, ...((by.get("flags") as Partial<FeatureFlags>) ?? {}) },
-    quotas: { ...DEFAULT_SETTINGS.quotas, ...((by.get("quotas") as AdminSettings["quotas"]) ?? {}) },
-    premiumPriceBdt: (by.get("premiumPriceBdt") as number | undefined) ?? DEFAULT_SETTINGS.premiumPriceBdt,
+  const [flagRows, planRows] = await Promise.all([db.select().from(featureFlags), db.select().from(plans)]);
+  const flags = { ...DEFAULT_FLAGS };
+  for (const r of flagRows) if (r.key in flags) flags[r.key as keyof FeatureFlags] = r.enabled;
+  const q = (code: "free" | "premium") => {
+    const row = planRows.find((p) => p.code === code)?.quotas ?? DEFAULT_PLANS.find((p) => p.code === code)!.quotas;
+    return { aiSearchPerDay: row.ai_search_per_day, resumeTailorPerDay: row.tailored_resume_per_day, cvParsePerDay: row.cv_parse_per_day };
   };
-}
-
-async function writeSetting(tx: Tx, ctx: Ctx, key: string, value: unknown) {
-  const userId = ctx.actor.kind === "user" ? ctx.actor.userId : null;
-  await tx
-    .insert(appSettings)
-    .values({ key, value, updatedBy: userId })
-    .onConflictDoUpdate({ target: appSettings.key, set: { value, updatedBy: userId, updatedAt: new Date(ctx.now()), version: sql`${appSettings.version} + 1` } });
+  return {
+    flags,
+    quotas: { free: q("free"), premium: q("premium") },
+    premiumPriceBdt: planRows.find((p) => p.code === "premium")?.priceBdt ?? DEFAULT_PLANS[1].priceBdt,
+  };
 }
 
 export async function getFeatureFlags(ctx: Ctx, db: DbOrTx): Promise<AdminSettings> {
@@ -199,21 +191,38 @@ export async function getFeatureFlags(ctx: Ctx, db: DbOrTx): Promise<AdminSettin
   return readSettings(db);
 }
 
+export async function flagEnabled(db: DbOrTx, key: keyof FeatureFlags): Promise<boolean> {
+  const [row] = await db.select().from(featureFlags).where(eq(featureFlags.key, key));
+  return row ? row.enabled : DEFAULT_FLAGS[key];
+}
+
 export async function setFeatureFlag(ctx: Ctx, tx: Tx, flag: keyof FeatureFlags, value: boolean): Promise<AdminSettings> {
   requireUser(ctx.actor, "settings.manage", { mutation: true });
-  const current = await readSettings(tx);
-  if (!(flag in current.flags)) throw new AppError("VALIDATION");
-  await writeSetting(tx, ctx, "flags", { ...current.flags, [flag]: value });
-  await writeAudit(tx, ctx, { action: "settings.flag", entityType: "settings", entityId: flag, before: { [flag]: current.flags[flag] }, after: { [flag]: value } });
+  if (!(flag in DEFAULT_FLAGS)) throw new AppError("VALIDATION");
+  const before = await flagEnabled(tx, flag);
+  await tx
+    .insert(featureFlags)
+    .values({ key: flag, enabled: value })
+    .onConflictDoUpdate({ target: featureFlags.key, set: { enabled: value, updatedAt: new Date(ctx.now()) } });
+  await writeAudit(tx, ctx, { action: "settings.flag", entityType: "settings", entityId: flag, before: { [flag]: before }, after: { [flag]: value } });
   return readSettings(tx);
 }
 
 export async function savePlanSettings(ctx: Ctx, tx: Tx, quotas: AdminSettings["quotas"], premiumPriceBdt: number): Promise<AdminSettings> {
   requireUser(ctx.actor, "settings.manage", { mutation: true });
   const current = await readSettings(tx);
-  await writeSetting(tx, ctx, "quotas", quotas);
-  await writeSetting(tx, ctx, "premiumPriceBdt", premiumPriceBdt);
-  await writeAudit(tx, ctx, { action: "settings.quotas", entityType: "settings", entityId: "quotas", before: { quotas: current.quotas, premiumPriceBdt: current.premiumPriceBdt }, after: { quotas, premiumPriceBdt } });
+  for (const d of DEFAULT_PLANS) {
+    const q = quotas[d.code];
+    const values = {
+      code: d.code,
+      nameBn: d.nameBn,
+      priceBdt: d.code === "premium" ? premiumPriceBdt : 0,
+      billingPeriod: d.billingPeriod,
+      quotas: { ai_search_per_day: q.aiSearchPerDay, cv_parse_per_day: q.cvParsePerDay, tailored_resume_per_day: q.resumeTailorPerDay },
+      featuresBn: d.featuresBn,
+    };
+    await tx.insert(plans).values(values).onConflictDoUpdate({ target: plans.code, set: { priceBdt: values.priceBdt, quotas: values.quotas, updatedAt: new Date(ctx.now()) } });
+  }
+  await writeAudit(tx, ctx, { action: "settings.quotas", entityType: "settings", entityId: "plans", before: { quotas: current.quotas, premiumPriceBdt: current.premiumPriceBdt }, after: { quotas, premiumPriceBdt } });
   return readSettings(tx);
 }
-

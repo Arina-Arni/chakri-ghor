@@ -418,7 +418,8 @@ describe("end-to-end: create → review → find → eligibility → resume → 
     // Resume: tailor from the base, then the PDF data is available.
     const list = await resumes.listResumes(w.ctx("seeker"), db);
     const base = list.find((r) => r.kind === "base")!;
-    const tailored = await mutation("seeker", (ctx, tx) => resumes.tailorResume(ctx, tx, base.id, postId));
+    const plan = await resumes.prepareTailor(w.ctx("seeker"), db, base.id, postId);
+    const tailored = await mutation("seeker", (ctx, tx) => resumes.tailorResume(ctx, tx, base.id, postId, plan));
     expect(tailored.mode).toBe("fallback");
     expect(tailored.resume.content.skills[0]).toBe("Microsoft Excel");
     expect((await resumes.resumeForPdf(w.ctx("seeker"), db, tailored.resume.id)).content.contact.fullName).toBeTruthy();

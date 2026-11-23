@@ -1,4 +1,11 @@
 import type {
+  AiFeature,
+  AiHealthStats,
+  FaultMode,
+  IngestInput,
+  WorkflowAction,
+  WorkflowRun,
+  WorkflowStepCode,
   AdminCircularRow,
   AdminSettings,
   AdminUser,
@@ -23,11 +30,12 @@ import {
   setOrganizationVerifiedAction,
   setUserStatusAction,
   transitionCircularAction,
+  runWorkerNowAction,
+  setFaultInjectionAction,
+  workflowActionAction,
 } from "@/server/actions/admin";
-import { mutate, query } from "./_runtime";
+import { fail, mutate, newKey, query } from "./_runtime";
 
-// TEMP until Part 3: ingestion workflow runs and AI health.
-export { getAiHealth, getFaultInjection, getWorkflowRun, ingest, listWorkflowRuns, setFaultInjection, workflowAction } from "./temp/workflow";
 
 // ───────── dashboard ─────────
 
@@ -153,4 +161,60 @@ export async function setFeatureFlag(flag: keyof FeatureFlags, value: boolean, i
 
 export async function savePlanSettings(quotas: AdminSettings["quotas"], premiumPriceBdt: number, idempotencyKey: string): Promise<Result<AdminSettings>> {
   return mutate(() => savePlanSettingsAction(quotas, premiumPriceBdt, idempotencyKey));
+}
+
+// ───────── ingestion workflow (A07) ─────────
+
+/** Start an ingestion run (multipart: the PDF can be up to 15 MB, so not a Server Action). */
+export async function ingest(input: IngestInput, idempotencyKey: string): Promise<Result<{ runId: string }>> {
+  void idempotencyKey; // runs are idempotent by content hash (ingest:{sha256})
+  const form = new FormData();
+  form.append("kind", input.kind);
+  if (input.failAtStep) form.append("failAt", input.failAtStep);
+  if (input.kind === "pdf_upload") form.append("file", input.file);
+  if (input.kind === "pdf_url") form.append("url", input.url);
+  if (input.kind === "text") form.append("text", input.text);
+  try {
+    const res = await fetch("/api/admin/ingest", { method: "POST", body: form, credentials: "same-origin" });
+    const body = (await res.json().catch(() => null)) as Result<{ runId: string }> | null;
+    return body && typeof body.ok === "boolean" ? body : fail("UNKNOWN");
+  } catch {
+    return fail("NETWORK");
+  }
+}
+
+export async function listWorkflowRuns(filter: { status?: string } = {}): Promise<Result<WorkflowRun[]>> {
+  return query("listWorkflowRuns", [filter], { empty: () => [] });
+}
+
+export async function getWorkflowRun(id: string): Promise<Result<WorkflowRun>> {
+  return query("getWorkflowRun", [id]);
+}
+
+export async function workflowAction(
+  runId: string,
+  action: WorkflowAction,
+  payload: { step?: WorkflowStepCode; reason?: string; json?: string },
+  idempotencyKey: string,
+): Promise<Result<WorkflowRun>> {
+  return mutate(() => workflowActionAction(runId, action, payload, idempotencyKey));
+}
+
+export async function runWorkerNow(): Promise<Result<{ processed: number }>> {
+  return mutate(() => runWorkerNowAction());
+}
+
+// ───────── AI health & fault injection (A06) ─────────
+
+export async function getAiHealth(period: "24h" | "7d"): Promise<Result<AiHealthStats>> {
+  return query("getAiHealth", [period]);
+}
+
+/** The signed-in admin's own active fault injection (polled by the admin banner). */
+export async function getFaultInjection(): Promise<Result<AiHealthStats["faultInjection"]>> {
+  return query("getFaultInjection", [], { ignoreForced: true });
+}
+
+export async function setFaultInjection(feature: AiFeature | null, mode: FaultMode | null): Promise<Result<AiHealthStats["faultInjection"]>> {
+  return mutate(() => setFaultInjectionAction(feature, mode, newKey()));
 }

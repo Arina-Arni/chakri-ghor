@@ -131,8 +131,9 @@ export async function startTrialAction(k: string): Promise<Result<Billing>> {
   return act("billing.trial", k, {}, (ctx, tx) => billing.startTrial(ctx, tx));
 }
 
+/** The test checkout delivers a signed webhook; the txn id comes from the key, so a double click pays once. */
 export async function completeMockCheckoutAction(outcome: "success" | "fail", k: string): Promise<Result<Billing>> {
-  return act("billing.checkout", k, { outcome }, (ctx, tx) => billing.completeMockCheckout(ctx, tx, parse(z.enum(["success", "fail"]), outcome)));
+  return actDirect((ctx) => billing.completeMockCheckout(ctx, parse(z.enum(["success", "fail"]), outcome), parse(z.string().regex(/^[A-Za-z0-9_:.-]{8,120}$/), k)));
 }
 
 export async function setCancelAtPeriodEndAction(cancel: boolean, k: string): Promise<Result<Billing>> {
@@ -148,7 +149,11 @@ export async function saveResumeAction(resumeId: string, content: ResumeContent,
 }
 
 export async function tailorResumeAction(sourceId: string, postId: string, k: string): Promise<Result<TailorResult>> {
-  return act("resume.tailor", k, { sourceId, postId }, (ctx, tx) => resumes.tailorResume(ctx, tx, parse(id, sourceId), parse(id, postId)));
+  // The AI part runs before the transaction so no rows stay locked while it waits.
+  let plan: resumes.TailorPlan | null = null;
+  const prep = await actDirect(async (ctx) => (plan = await resumes.prepareTailor(ctx, getDb(), parse(id, sourceId), parse(id, postId))));
+  if (!prep.ok) return prep as Result<TailorResult>;
+  return act("resume.tailor", k, { sourceId, postId }, (ctx, tx) => resumes.tailorResume(ctx, tx, parse(id, sourceId), parse(id, postId), plan!));
 }
 
 export async function decideResumeChangeAction(resumeId: string, changeId: string, accept: boolean, k: string): Promise<Result<Resume>> {

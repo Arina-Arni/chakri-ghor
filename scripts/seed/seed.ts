@@ -12,6 +12,9 @@ import { categories, districtById, districts, divisions, tags } from "@/domain/t
 import type { ResumeContent } from "@/types";
 import type { Db } from "@/server/db/client";
 import * as s from "@/server/db/schema";
+import { DEFAULT_FLAGS } from "@/server/services/admin-defaults";
+import { DEFAULT_PLANS } from "@/server/quota-defaults";
+import { WORKFLOW_STEPS } from "@/types";
 import { DAY, H, defaultHowTo, seeds as handSeeds, type Seed } from "./circulars-data";
 import { generatedSeeds } from "./generated-data";
 import { organizationSeeds } from "./organizations-data";
@@ -226,6 +229,20 @@ export async function seed(db: Db, opts: SeedOptions): Promise<{ circulars: numb
     if (id) await db.update(s.profiles).set({ onboardingStep: 4, onboardingCompletedAt: new Date(now - 60 * DAY) }).where(eq(s.profiles.userId, id));
   }
 
+  // ── plans & feature flags ──
+  for (const pl of DEFAULT_PLANS) {
+    await db
+      .insert(s.plans)
+      .values({ code: pl.code, nameBn: pl.nameBn, priceBdt: pl.priceBdt, billingPeriod: pl.billingPeriod, quotas: pl.quotas, featuresBn: pl.featuresBn })
+      .onConflictDoNothing();
+  }
+  for (const [key, enabled] of Object.entries(DEFAULT_FLAGS)) {
+    await db.insert(s.featureFlags).values({ key, enabled }).onConflictDoNothing();
+  }
+
+  // ── demo workflow runs (succeeded, waiting_review, failed at notify_matches) ──
+  if (adminId) await seedWorkflowRuns(db, now, adminId, circularId);
+
   // ── sample searches (only on an empty log, so re-runs don't inflate analytics) ──
   const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(s.searchLogs);
   if (Number(n) === 0) {
@@ -435,4 +452,67 @@ async function seedSeeker(
       .onConflictDoNothing({ target: s.notifications.dedupeKey });
   }
   await db.insert(s.subscriptions).values({ userId }).onConflictDoNothing();
+}
+
+/** Three demo runs so the judges can open a timeline and press "Retry" right away. */
+async function seedWorkflowRuns(db: Db, now: number, adminId: string, circularId: (slug: string) => string) {
+  const plans: { key: string; label: string; circular: string; status: "succeeded" | "waiting_review" | "failed"; until: string; startedMinsAgo: number }[] = [
+    { key: "demo-succeeded", label: "সমাজসেবা অধিদপ্তর — নমুনা ইনজেস্ট", circular: "alor-poth-community-mobiliser", status: "succeeded", until: "notify_matches", startedMinsAgo: 180 },
+    { key: "demo-waiting", label: "পরিসংখ্যান ব্যুরো — গণনাকারী (নমুনা)", circular: "review-bbs-enumerator", status: "waiting_review", until: "review_gate", startedMinsAgo: 90 },
+    { key: "demo-failed", label: "স্বাস্থ্য অধিদপ্তর — নমুনা (notify ব্যর্থ)", circular: "dghs-medical-technologist-2026", status: "failed", until: "notify_matches", startedMinsAgo: 30 },
+  ];
+  for (const p of plans) {
+    const runId = seedId(`run:${p.key}`);
+    const cid = circularId(p.circular);
+    const [exists] = await db.select({ id: s.workflowRuns.id }).from(s.workflowRuns).where(eq(s.workflowRuns.id, runId));
+    if (exists) continue;
+    const [c] = await db.select({ id: s.circulars.id }).from(s.circulars).where(eq(s.circulars.id, cid));
+    if (!c) continue;
+    const start = now - p.startedMinsAgo * 60_000;
+    await db.insert(s.workflowRuns).values({
+      id: runId,
+      type: "circular_ingest",
+      status: p.status,
+      input: { kind: "text", label: p.label, sha256: seedId(`sha:${p.key}`).replace(/-/g, ""), size: 400, text: `${p.label}\nনমুনা ইনজেস্ট টেক্সট — শুধু ডেমোর জন্য।`, failAt: p.status === "failed" ? "notify_matches" : null },
+      context: {},
+      idempotencyKey: `ingest:demo:${p.key}`,
+      circularId: cid,
+      createdBy: adminId,
+      startedAt: new Date(start),
+      finishedAt: p.status === "waiting_review" ? null : new Date(start + 60_000),
+      error: p.status === "failed" ? "notify_matches: INJECTED_FAILURE" : null,
+    });
+    const untilIdx = WORKFLOW_STEPS.indexOf(p.until as (typeof WORKFLOW_STEPS)[number]);
+    for (const [i, name] of WORKFLOW_STEPS.entries()) {
+      const isLast = i === untilIdx;
+      const status =
+        name === "apply_update" ? "skipped" : i < untilIdx ? "succeeded" : isLast ? (p.status === "succeeded" ? "succeeded" : p.status === "waiting_review" ? "waiting" : "failed") : "pending";
+      const output: Record<string, unknown> | null =
+        status === "skipped"
+          ? { skippedReason: "branch" }
+          : name === "create_draft"
+            ? { circularId: cid, status: "pending_review" }
+            : name === "review_gate" && status === "waiting"
+              ? { reasons: ["confidence 0.74 < 0.85"] }
+              : name === "notify_matches" && status === "succeeded"
+                ? { cursor: null, notified: 0, batches: 1, done: true }
+                : status === "succeeded"
+                  ? { ok: true, demo: true }
+                  : null;
+      await db.insert(s.workflowSteps).values({
+        runId,
+        name,
+        position: i,
+        status,
+        attempts: status === "pending" ? 0 : status === "failed" ? 3 : 1,
+        maxAttempts: name === "review_gate" ? 1 : 3,
+        output,
+        errorCode: status === "failed" ? "INJECTED_FAILURE" : null,
+        errorMessage: status === "failed" ? "পরীক্ষার জন্য ইচ্ছাকৃত ব্যর্থতা (failAt)" : null,
+        startedAt: status === "pending" ? null : new Date(start + i * 4000),
+        finishedAt: status === "succeeded" || status === "failed" || status === "skipped" ? new Date(start + i * 4000 + 2500) : null,
+      });
+    }
+    await db.insert(s.workflowEvents).values({ runId, type: "run.created", toStatus: "queued", actorId: adminId, message: "seed demo" });
+  }
 }

@@ -24,9 +24,9 @@ import { useData } from "@/hooks/use-data";
 import { newIdempotencyKey } from "@/hooks/use-mutation";
 import { t } from "@/i18n";
 import { CIRCULAR_FILE } from "@/schemas/common";
-import type { IngestInput, WorkflowRun, WorkflowStepCode } from "@/types";
+import { WORKFLOW_STEPS, type IngestInput, type WorkflowRun, type WorkflowStepCode } from "@/types";
 
-const STEPS: WorkflowStepCode[] = ["fetch_source", "extract_text", "ai_extract", "validate", "dedupe", "review_gate", "publish", "notify"];
+const STEPS: WorkflowStepCode[] = WORKFLOW_STEPS.filter((s) => s !== "apply_update" && s !== "review_gate");
 
 export const durationBn = (ms: number | null) => (ms == null ? "—" : ms < 60_000 ? `${toBnDigits(Math.round(ms / 1000))} সে.` : `${toBnDigits(Math.round(ms / 60_000))} মি.`);
 
