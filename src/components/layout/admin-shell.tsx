@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -128,7 +129,7 @@ function FaultBanner() {
 }
 
 /** Admin chrome: collapsible sidebar on desktop, menu sheet on mobile. */
-export function AdminShell({ children }: { children: React.ReactNode }) {
+function AdminShellInner({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState(false);
   return (
@@ -190,5 +191,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         {children}
       </div>
     </div>
+  );
+}
+
+/** Reads the URL, so it streams inside Suspense (Cache Components). */
+export function AdminShell(props: React.ComponentProps<typeof AdminShellInner>) {
+  return (
+    <Suspense fallback={null}>
+      <AdminShellInner {...props} />
+    </Suspense>
   );
 }

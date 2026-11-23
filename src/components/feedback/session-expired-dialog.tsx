@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -20,7 +21,7 @@ import { onSessionExpired } from "@/lib/events";
  * Opens when a request reports an expired session. Drafts live in localStorage,
  * so logging in again (in a new tab or here) keeps them.
  */
-export function SessionExpiredDialog() {
+function SessionExpiredDialogInner() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   useEffect(() => onSessionExpired(() => setOpen(true)), []);
@@ -44,5 +45,14 @@ export function SessionExpiredDialog() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Reads the URL, so it streams inside Suspense (Cache Components). */
+export function SessionExpiredDialog() {
+  return (
+    <Suspense fallback={null}>
+      <SessionExpiredDialogInner />
+    </Suspense>
   );
 }

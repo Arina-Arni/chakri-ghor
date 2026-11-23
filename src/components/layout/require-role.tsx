@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -15,7 +16,7 @@ import type { Role } from "@/types";
  * Client-side gate for Part 1 (no real auth yet). Guests are sent to login;
  * signed-in users without the role see a "no access" message. Part 2 enforces this on the server.
  */
-export function RequireRole({ roles, children }: { roles: Role[]; children: React.ReactNode }) {
+function RequireRoleInner({ roles, children }: { roles: Role[]; children: React.ReactNode }) {
   const { status, role } = useSession();
   const router = useRouter();
   const pathname = usePathname();
@@ -42,4 +43,13 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
     );
   }
   return <>{children}</>;
+}
+
+/** Reads the URL, so it streams inside Suspense (Cache Components). */
+export function RequireRole(props: React.ComponentProps<typeof RequireRoleInner>) {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <RequireRoleInner {...props} />
+    </Suspense>
+  );
 }

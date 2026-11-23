@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -49,7 +50,7 @@ function HeaderSearch() {
 }
 
 /** Public header for guests; top bar with search, bell and avatar for signed-in users. */
-export function AppHeader() {
+function AppHeaderInner() {
   const { me, status } = useSession();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -140,5 +141,14 @@ export function AppHeader() {
         </div>
       </div>
     </header>
+  );
+}
+
+/** Reads the URL, so it streams inside Suspense (Cache Components). */
+export function AppHeader() {
+  return (
+    <Suspense fallback={<div className="h-16 border-b bg-surface" aria-hidden />}>
+      <AppHeaderInner />
+    </Suspense>
   );
 }

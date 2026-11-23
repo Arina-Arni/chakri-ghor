@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, KanbanSquare, Search, User } from "lucide-react";
@@ -15,7 +16,7 @@ const ITEMS = [
 ];
 
 /** Mobile bottom navigation for signed-in seekers. */
-export function BottomNav() {
+function BottomNavInner() {
   const { me } = useSession();
   const pathname = usePathname();
   if (!me) return null;
@@ -42,5 +43,14 @@ export function BottomNav() {
         </ul>
       </nav>
     </>
+  );
+}
+
+/** Reads the URL, so it streams inside Suspense (Cache Components). */
+export function BottomNav() {
+  return (
+    <Suspense fallback={null}>
+      <BottomNavInner />
+    </Suspense>
   );
 }

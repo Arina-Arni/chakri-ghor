@@ -458,6 +458,11 @@ export async function getSeekerDashboard(): Promise<Result<SeekerDashboard>> {
 
 // ───────── billing ─────────
 
+/** Public plan list for /pricing (no login needed). */
+export async function getPlans(): Promise<Result<Billing["plans"]>> {
+  return read(() => ok(structuredClone(getDb().billing.plans)));
+}
+
 export async function getBilling(): Promise<Result<Billing>> {
   return read(() => requireSeeker<Billing>() ?? ok(structuredClone(getDb().billing)));
 }
