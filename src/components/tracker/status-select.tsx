@@ -23,10 +23,12 @@ export function StatusSelect({ value, onChange, label, disabled }: { value: Appl
 }
 
 export const STATUS_TONE: Record<ApplicationStatus, "neutral" | "primary" | "info" | "warning" | "success" | "danger" | "ai"> = {
-  interested: "neutral",
+  saved: "neutral",
+  preparing: "neutral",
   applied: "primary",
   admit_card: "info",
-  exam: "warning",
+  exam_scheduled: "warning",
+  written_passed: "warning",
   viva: "ai",
   selected: "success",
   rejected: "danger",

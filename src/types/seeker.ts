@@ -13,11 +13,14 @@ export type SavedSearch = {
   createdAt: IsoDateTime;
 };
 
+/** Tracker statuses in pipeline order (spec §4.2). The last three are terminal. */
 export const APPLICATION_STATUSES = [
-  "interested",
+  "saved",
+  "preparing",
   "applied",
   "admit_card",
-  "exam",
+  "exam_scheduled",
+  "written_passed",
   "viva",
   "selected",
   "rejected",

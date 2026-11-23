@@ -29,7 +29,7 @@ import { t } from "@/i18n";
 import { extendDeadlineSchema } from "@/schemas/circular";
 import type { AdminCircularRow, CircularAction, CircularStatus } from "@/types";
 
-const STATUSES: CircularStatus[] = ["draft", "in_review", "published", "rejected", "cancelled", "archived"];
+const STATUSES: CircularStatus[] = ["draft", "pending_review", "published", "closed", "rejected", "cancelled", "archived"];
 
 function RevisionDrawer({ row, onClose }: { row: AdminCircularRow | null; onClose: () => void }) {
   const q = useData(() => (row ? getCircularRevisions(row.id) : Promise.resolve({ ok: true as const, data: [] })), [row?.id]);

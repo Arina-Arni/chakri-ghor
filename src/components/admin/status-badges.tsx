@@ -5,8 +5,9 @@ import type { CircularStatus, WorkflowRunStatus, WorkflowStepStatus } from "@/ty
 
 const CIRC = {
   draft: "neutral",
-  in_review: "warning",
+  pending_review: "warning",
   published: "success",
+  closed: "outline",
   rejected: "danger",
   cancelled: "neutral",
   archived: "outline",

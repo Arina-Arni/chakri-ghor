@@ -50,7 +50,12 @@ function coverage(haystack: string, keywords: string[]) {
   return { ratio: unique.length === 0 ? 1 : matched.length / unique.length, matched, missing };
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Which keywords (translated to English) appear in any of the given texts. */
+export function keywordCoverage(texts: string[], keywords: string[]) {
+  return coverage(normalize(texts.join(" \n ")), keywords);
+}
+
+const EMAIL_RE =/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^(\+?880|0)1[3-9]\d{8}$/;
 
 function wordCount(s: string): number {

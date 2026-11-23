@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import type { Application, ApplicationStatus } from "@/types";
 import { StatusSelect } from "./status-select";
 
-const AFTER_DEADLINE: ApplicationStatus[] = ["admit_card", "exam", "viva", "selected", "rejected", "withdrawn"];
+const AFTER_DEADLINE: ApplicationStatus[] = ["admit_card", "exam_scheduled", "written_passed", "viva", "selected", "rejected", "withdrawn"];
 
 export function ApplicationCard({
   app,

@@ -12,8 +12,11 @@ import {
   HardHat,
   Landmark,
   Laptop,
+  Megaphone,
   Palette,
+  Shapes,
   Shield,
+  Sprout,
   Stethoscope,
   Users,
   Wrench,
@@ -62,6 +65,9 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   shield: Shield,
   "hand-heart": HandHeart,
   wrench: Wrench,
+  sprout: Sprout,
+  megaphone: Megaphone,
+  shapes: Shapes,
 };
 
 function iconFor(name: string): LucideIcon {

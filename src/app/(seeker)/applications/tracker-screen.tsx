@@ -65,7 +65,7 @@ export function TrackerScreen() {
   };
 
   const now = serverNow();
-  const urgent = apps.filter((a) => ["interested", "applied"].includes(a.status) && new Date(a.deadlineAt).getTime() - now > 0 && new Date(a.deadlineAt).getTime() - now < 86_400_000).length;
+  const urgent = apps.filter((a) => ["saved", "preparing"].includes(a.status) && new Date(a.deadlineAt).getTime() - now > 0 && new Date(a.deadlineAt).getTime() - now < 86_400_000).length;
   const visible = filter === "all" ? apps : apps.filter((a) => a.status === filter);
   const current = apps.find((a) => a.id === openId) ?? null;
 

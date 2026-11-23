@@ -14,7 +14,7 @@ export type ApplyPlatform = "teletalk" | "official_site" | "email" | "postal";
 
 /** Ordered from lowest to highest; comparisons use this order. */
 export const EDUCATION_LEVELS = [
-  "below_ssc",
+  "class_8",
   "ssc",
   "hsc",
   "diploma",
@@ -30,8 +30,9 @@ export type GenderRule = "any" | "male" | "female";
 /** Moderation status of the circular record. */
 export type CircularStatus =
   | "draft"
-  | "in_review"
+  | "pending_review"
   | "published"
+  | "closed"
   | "rejected"
   | "cancelled"
   | "archived";
