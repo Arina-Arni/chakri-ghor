@@ -66,3 +66,17 @@ server, no fixtures left. Ingest/workflow and AI-health stay simulated until Par
 | 7 | Auth & access | §2, §7 | `@supabase/ssr` cookies, `proxy.ts`, `ServerRoleGate`, security headers |
 | 8 | Seed | §8 | `npm run db:seed` — 40 circulars / 71 posts, demo user per role |
 | 9 | Tests & CI | §9 | unit + integration (PGlite / Postgres service), GitHub Actions, no-fixture check |
+
+---
+
+# Part 3 plan — AI (A06), workflow (A07) & finishing
+
+| # | Step | Output |
+|---|------|--------|
+| 1 | Tables | `drizzle/0002_part3.sql`, `0003_part3_supabase.sql` (RLS, append-only events, pg_cron helper) |
+| 2 | A06 | `src/lib/ai` client + resilience, `src/server/ai` (Gemini, Postgres store, features), `domain/ai-guard`, quotas |
+| 3 | A07 | `src/lib/workflow/engine.ts`, `src/server/workflow/ingest.ts`, `domain/ingest`, `services/workflows.ts`, `/api/admin/ingest`, `/api/cron/worker` |
+| 4 | Automations | scheduler (reminders, auto-close, subscriptions, cleanup), email outbox + React Email, `/api/cron/scheduler` |
+| 5 | Plans & payments | subscription state machine, `plans`, `usage_counters`, `PaymentProvider` + mock webhook |
+| 6 | Hardening & SEO | enforced CSP, sitemap/robots/OG/JSON-LD, `/api/health`, audit + bundle-secret checks |
+| 7 | Tests & docs | unit + integration for §2.10/§3.4, real-login E2E, README, CHALLENGES, RUBRIC_MAP, TEST_SCENARIOS, DEMO_SCRIPT, SUBMISSION |

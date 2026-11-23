@@ -203,3 +203,37 @@ Hand-written Part 1 circulars plus template-generated ones (40 / 71 posts), dete
 (re-runs update in place), dates relative to seed time, `is_sample` on rows and "নমুনা তথ্য" in
 descriptions. A few sample search-log rows are inserted only into an empty log so the admin
 dashboard has content. Demo passwords go to the git-ignored `.seed-credentials.local.md`.
+
+# Part 3 decisions
+
+## D32 — One AI client with injectable dependencies
+
+`createAiClient(deps)` takes the provider, store, clock, sleep and random. The app wires Gemini and Postgres (`src/server/ai/runtime.ts`); unit tests use a scripted provider, the memory store and fake timers. Per-attempt timeouts use an AbortController plus a timer (same effect as `AbortSignal.timeout`, and testable with fake timers).
+
+## D33 — The breaker counts provider failures, not wrong answers
+
+Timeouts, 429, 5xx, network errors and malformed output count toward the breaker. `invalid_semantics` does not, because the provider is healthy and the answer was wrong.
+
+## D34 — AI work happens outside transactions
+
+Resume tailoring prepares the AI changes first (`prepareTailor`), then writes inside the idempotent transaction. No rows are locked during a call that can take up to 25 s.
+
+## D35 — The workflow engine takes time as a parameter
+
+Claiming, backoff and leases use a `now` that is passed in, so lease expiry and retries are deterministic in tests. Seeded and test failures use `failAt` / `failAfterBatches` in the run input. A `failAt` run gets its own idempotency key, so the normal upload of the same file still works.
+
+## D36 — pg_cron jobs are created by a function, not hard-coded
+
+The deployed URL and `CRON_SECRET` are unknown when migrations run, so migration 0003 defines `schedule_chakri_cron(url, secret)` and `npm run db:cron` calls it.
+
+## D37 — Mock checkout uses the real webhook path
+
+The test checkout builds a signed event and passes it through `handlePaymentWebhook`: the same signature check and the same unique `provider_txn_id` a real provider would hit. The idempotency key becomes the transaction id, so a double click pays once.
+
+## D38 — Optional integrations degrade instead of failing
+
+Without `GEMINI_API_KEY` every AI feature uses its fallback (logged as `provider_error`). Without `RESEND_API_KEY` emails stay in the outbox. `CRON_SECRET` and `PAYMENT_WEBHOOK_SECRET` are required.
+
+## D39 — CSP keeps 'unsafe-inline' for scripts
+
+Next.js injects inline bootstrap scripts, and a nonce-based CSP would force every page to render dynamically. The CSP is enforced with `'unsafe-inline'` scripts, `frame-ancestors 'none'` and an allowlist for Supabase and Google.

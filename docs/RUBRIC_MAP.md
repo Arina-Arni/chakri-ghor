@@ -1,0 +1,31 @@
+# Rubric map
+
+Each rubric line maps to the feature that covers it, the file paths, and how to verify it. "Tests" are commands you can run locally: `npm test` (unit) and `npm run test:integration` (real Postgres).
+
+| Rubric item | Feature | Where | How to verify |
+|---|---|---|---|
+| **M01 · 3 interconnected modules (6)** | Discovery · Profile & Resume · Tracker & Notifications · Admin & Ingestion · Plans | `src/server/services/*`, `src/app/(public|seeker|admin)` | Ingest a circular → it appears in `/jobs` → bookmark → reminder in `/notifications` → tracker card |
+| **M01 · End-to-end workflow (4)** | Ingest → publish → notify → search → eligibility → resume → apply → track | `src/server/workflow/ingest.ts`, `services/discovery.ts`, `services/resumes.ts`, `services/applications.ts` | `tests/integration/services.test.ts` "end-to-end", `part3.test.ts` "runs every step…"; manual: `docs/TEST_SCENARIOS.md` #1–#6 |
+| **M01 · Meaningful features (2)** | AI search, eligibility engine, ATS resume, reminders | `src/server/ai/features.ts`, `src/domain/eligibility`, `src/domain/ats`, `src/server/jobs/scheduler.ts` | `/jobs` AI mode, eligibility panel on a job page, `/resumes/[id]` |
+| **M02 · CRUD (4)** | Circulars and posts, organizations, profile/education/experience, resumes, applications, bookmarks, saved searches | `src/server/services/*`, `src/server/actions/*` | Admin circular form, `/profile`, `/applications`, `/alerts` |
+| **M02 · Persistence (2)** | Supabase Postgres via Drizzle, versioned migrations, private Storage | `src/server/db/schema.ts`, `drizzle/*.sql`, `src/server/workflow/blobs.ts` | `npm run db:migrate`; `tests/integration/migrations.test.ts` |
+| **M02 · Relationships & consistency (2)** | FKs with explicit `on delete`, unique and check constraints, transactions, optimistic locking | `schema.ts`, `0001_supabase.sql`, `services/*` (`version` checks) | `services.test.ts` "optimistic locking", "rolls back completely" |
+| **M03 · Secure authentication (3)** | Supabase Auth (httpOnly cookies), email verification, reset, Google, rate-limited login | `src/server/services/account.ts`, `src/server/rate-limit`, `src/app/auth/*`, `src/proxy.ts` | `/signup` → email link → `/login`; repeated bad logins → 429 |
+| **M03 · Role/resource authorization (3)** | `authorize()` role matrix, ownership → 404, RLS on every table | `src/server/authz`, `0001_supabase.sql`, `0003_part3_supabase.sql` | `services.test.ts` "authorization", `part3.test.ts` "only staff start runs…"; change an id in a URL → 404 |
+| **M03 · Session & access protection (2)** | Server-verified session (`getClaims`), protected route groups, re-authentication, sign out everywhere, suspension | `src/server/request.ts`, `components/layout/server-role-gate.tsx`, `services/account.ts`, `services/admin.ts` | `/settings` → sign out everywhere; admin suspends a user → their mutations get 403 |
+| **M04 · Rule-based decisions (4)** | Eligibility engine, review gate, quotas | `src/domain/eligibility`, `ingest.ts` `reviewGate`, `src/server/quota.ts` | `tests/unit/eligibility.test.ts`; gate in `part3.test.ts` |
+| **M04 · Multi-condition workflows (4)** | Circular, application and subscription state machines; the ingestion workflow | `src/domain/state-machines/*`, `src/lib/workflow/engine.ts` | `tests/unit/state-machines.test.ts`, `subscription.test.ts` |
+| **M04 · Correct outcomes (2)** | Every legal and illegal transition and every boundary is unit-tested | `tests/unit/*` | `npm test` |
+| **M05 · Search, filter, sort (3)** | Trigram + ILIKE search, facets, keyset pagination, sort, AI search | `services/discovery.ts`, `src/server/ai/features.ts` | `/jobs`; `services.test.ts` "search & discovery" |
+| **M05 · Calculations / aggregation (2)** | Dashboards, facet counts, ATS and match scores, age calculation | `services/dashboards.ts`, `src/domain/ats`, `src/domain/matching`, `src/domain/eligibility` | `/admin`, `/dashboard` |
+| **M05 · Output accuracy (1)** | Aggregates asserted exactly on seed data | `tests/integration/services.test.ts` "dashboards" | `npm run test:integration` |
+| **M06 · Invalid input (3)** | Zod on client and server, magic-byte and size checks | `src/schemas/*`, `src/server/api/validate.ts`, `src/domain/cv`, `src/server/workflow/fetch-pdf.ts` | Invalid dates or phone numbers in `/onboarding`; upload a renamed `.exe` |
+| **M06 · Duplicate actions (2)** | Idempotency keys, unique constraints, dedupe keys, duplicate-ingest detection, idempotent webhooks | `src/server/idempotency`, `errors.ts` (unique → DUPLICATE), `ingest.ts`, `services/billing.ts` | Double-click Apply; upload the same PDF twice; `part3.test.ts` "duplicate webhook" |
+| **M06 · Failure & recovery (3)** | AI fallbacks, email outbox, resumable workflows, error boundaries, drafts | `src/lib/ai/client.ts`, `src/server/email/outbox.ts`, `src/lib/workflow/engine.ts` | `docs/CHALLENGES.md` reproduction steps |
+| **M07 · Responsive (2)** | Mobile-first layouts (360 px and up) | `src/app/**`, `docs/UI.md` screenshots | Resize to 360 px; screenshots in `docs/UI.md` |
+| **M07 · Keyboard & semantics (1)** | Landmarks, skip link, focus management, `aria-live`, keyboard-operable tracker | `src/components/**`, `tests/e2e/keyboard.spec.ts` | Tab through `/jobs` and `/onboarding` |
+| **M07 · Validation feedback (1)** | Inline Bangla errors, error summary, toasts | `src/components/forms/*`, `src/i18n/bn.ts` | Submit an empty form |
+| **M08 · Live deployment (2)** | Vercel + Supabase (+ pg_cron) | `README.md` → Deployment | Live URL in `docs/SUBMISSION.md` |
+| **M08 · Repo & setup docs (2)** | README + `docs/` | `README.md`, `docs/*.md` | — |
+| **A06 · External API & Fault Tolerance (20)** | One AI client: timeouts, retries, breaker, repair, semantic checks, cache, quotas, fault injection, observability | `src/lib/ai/*`, `src/server/ai/*`, `src/domain/ai-guard`, `/admin/ai-health` | `docs/CHALLENGES.md#a06`; `tests/unit/ai-client.test.ts` (23 tests) |
+| **A07 · Automated Multi-Step Workflow (20)** | Own engine: steps, leases, persisted outputs, retries, branching, review gate, compensation, duplicate detection, batch cursor | `src/lib/workflow/engine.ts`, `src/server/workflow/*`, `src/server/services/workflows.ts`, `/admin/workflows/[id]` | `docs/CHALLENGES.md#a07`; `tests/integration/part3.test.ts` |
