@@ -189,7 +189,7 @@ export async function getTaxonomy(): Promise<Result<Taxonomy>> {
       verified: o.verified,
       type: o.type,
     })),
-  }));
+  }), { ignoreForced: true });
 }
 
 export async function listCirculars(filters: JobFilters, cursor: string | null = null): Promise<Result<Page<CircularListItem>>> {

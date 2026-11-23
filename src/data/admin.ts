@@ -679,7 +679,7 @@ export async function getFaultInjection(): Promise<Result<AiHealthStats["faultIn
     const db = getDb();
     if (db.faultInjection && new Date(db.faultInjection.expiresAt).getTime() <= Date.now()) db.faultInjection = null;
     return ok(db.faultInjection);
-  });
+  }, { ignoreForced: true });
 }
 
 export async function setFaultInjection(feature: AiFeature | null, mode: FaultMode | null): Promise<Result<AiHealthStats["faultInjection"]>> {

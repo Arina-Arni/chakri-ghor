@@ -55,8 +55,11 @@ function randomFailure(): boolean {
 }
 
 /** Simulate a read: latency, forced loading/empty/error states. */
-export async function read<T>(produce: () => Result<T> | T, opts: { empty?: () => T } = {}): Promise<Result<T>> {
-  const state = forcedState();
+export async function read<T>(
+  produce: () => Result<T> | T,
+  opts: { empty?: () => T; /** session/taxonomy reads are not part of "the current screen" */ ignoreForced?: boolean } = {},
+): Promise<Result<T>> {
+  const state = opts.ignoreForced ? null : forcedState();
   if (state === "loading") return new Promise<Result<T>>(() => {});
   await sleep(latency());
   if (state === "error" || randomFailure()) return fail("UNKNOWN");

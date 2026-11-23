@@ -86,7 +86,7 @@ export async function getMe(): Promise<Result<Me | null>> {
       planId: db.billing.subscription.planId,
       unreadNotifications: db.notifications.filter((n) => !n.readAt).length,
     };
-  });
+  }, { ignoreForced: true });
 }
 
 export async function getProfile(): Promise<Result<Profile>> {
