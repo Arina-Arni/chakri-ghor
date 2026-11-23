@@ -132,7 +132,7 @@ export function StackedBarChart({
             <XAxis dataKey={xKey} tick={tickStyle} axisLine={false} tickLine={false} />
             <YAxis tick={tickStyle} tickFormatter={fmt} axisLine={false} tickLine={false} allowDecimals={false} />
             <Tooltip content={<ChartTooltip />} cursor={{ fill: "#f1f5f9" }} />
-            <Legend wrapperStyle={{ fontSize: 13, color: AXIS }} iconType="square" />
+            <Legend wrapperStyle={{ fontSize: 13 }} iconType="square" formatter={(v) => <span style={{ color: "#0f172a" }}>{v}</span>} />
             {series.map((s, i) => (
               <Bar
                 key={s.key}
