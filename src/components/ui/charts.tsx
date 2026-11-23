@@ -97,7 +97,7 @@ export function BarListChart({ title, data }: { title: string; data: { labelBn: 
     <ChartCard title={title}>
       <div aria-hidden style={{ height: Math.max(160, rows.length * 36) }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={rows} layout="vertical" margin={{ left: 8, right: 24, top: 0, bottom: 0 }} barCategoryGap={6}>
+          <BarChart accessibilityLayer={false} data={rows} layout="vertical" margin={{ left: 8, right: 24, top: 0, bottom: 0 }} barCategoryGap={6}>
             <CartesianGrid horizontal={false} stroke={GRID} />
             <XAxis type="number" tick={tickStyle} tickFormatter={fmt} axisLine={false} tickLine={false} allowDecimals={false} />
             <YAxis type="category" dataKey="label" tick={tickStyle} width={130} axisLine={false} tickLine={false} />
@@ -127,7 +127,7 @@ export function StackedBarChart({
     <ChartCard title={title}>
       <div aria-hidden className="h-60">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ left: -16, right: 8, top: 8 }}>
+          <BarChart accessibilityLayer={false} data={data} margin={{ left: -16, right: 8, top: 8 }}>
             <CartesianGrid vertical={false} stroke={GRID} />
             <XAxis dataKey={xKey} tick={tickStyle} axisLine={false} tickLine={false} />
             <YAxis tick={tickStyle} tickFormatter={fmt} axisLine={false} tickLine={false} allowDecimals={false} />
@@ -160,7 +160,7 @@ export function LineTrendChart({ title, data, xKey, yKey, yLabel }: { title: str
     <ChartCard title={title}>
       <div aria-hidden className="h-60">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ left: -16, right: 12, top: 8 }}>
+          <LineChart accessibilityLayer={false} data={data} margin={{ left: -16, right: 12, top: 8 }}>
             <CartesianGrid vertical={false} stroke={GRID} />
             <XAxis dataKey={xKey} tick={tickStyle} axisLine={false} tickLine={false} />
             <YAxis tick={tickStyle} tickFormatter={fmt} axisLine={false} tickLine={false} allowDecimals={false} />
@@ -183,8 +183,8 @@ export function DonutChart({ title, data }: { title: string; data: { labelBn: st
       <div className="flex flex-col items-center gap-4 sm:flex-row">
         <div aria-hidden className="relative size-44 shrink-0">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={rows} dataKey="value" nameKey="label" innerRadius="62%" outerRadius="100%" stroke="#ffffff" strokeWidth={2} startAngle={90} endAngle={-270}>
+            <PieChart accessibilityLayer={false}>
+              <Pie rootTabIndex={-1} data={rows} dataKey="value" nameKey="label" innerRadius="62%" outerRadius="100%" stroke="#ffffff" strokeWidth={2} startAngle={90} endAngle={-270}>
                 {rows.map((_, i) => (
                   <Cell key={i} fill={SERIES[i % SERIES.length]} />
                 ))}

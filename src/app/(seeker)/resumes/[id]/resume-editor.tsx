@@ -53,9 +53,10 @@ function AtsPanel({ resume, content, onAddKeyword }: { resume: Resume; content: 
         <h3 id="bd-h" className="mb-2 font-semibold">{t("resume.breakdown")}</h3>
         <dl className="space-y-2">
           {rows.map(([label, v, max]) => (
-            <div key={label}>
-              <div className="flex justify-between text-sm"><dt>{label}</dt><dd className="tabular-nums">{toBnDigits(v)}/{toBnDigits(max)}</dd></div>
-              <div className="h-2 rounded-full bg-muted" aria-hidden><div className="h-2 rounded-full bg-primary" style={{ width: `${(v / max) * 100}%` }} /></div>
+            <div key={label} className="grid grid-cols-[1fr_auto] gap-x-2 text-sm">
+              <dt>{label}</dt>
+              <dd className="tabular-nums">{toBnDigits(v)}/{toBnDigits(max)}</dd>
+              <dd className="col-span-2 h-2 rounded-full bg-muted" aria-hidden><div className="h-2 rounded-full bg-primary" style={{ width: `${(v / max) * 100}%` }} /></dd>
             </div>
           ))}
         </dl>

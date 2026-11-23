@@ -44,7 +44,7 @@ export function ResumePreview({ content: c, update }: { content: ResumeContent; 
         className="mx-auto aspect-[1/1.414] w-full max-w-[720px] min-w-[300px] bg-white p-5 font-latin text-[13px] leading-relaxed text-slate-800 shadow-raised sm:p-10"
       >
         <header className="text-center">
-          <InlineText as="h1" value={c.contact.fullName} label="Full name" className="text-2xl font-bold text-slate-900" onSave={(v) => update((x) => ({ ...x, contact: { ...x.contact, fullName: v } }))} />
+          <InlineText as="p" value={c.contact.fullName} label="Full name" className="text-2xl font-bold text-slate-900" onSave={(v) => update((x) => ({ ...x, contact: { ...x.contact, fullName: v } }))} />
           <InlineText as="p" value={c.headline} label="Headline" className="text-[14px] text-slate-600" onSave={(v) => set("headline", v)} />
           <p className="mt-1 flex flex-wrap justify-center gap-x-2 text-[12px] text-slate-600">
             {(["email", "phone", "location"] as const).map((k) => (
