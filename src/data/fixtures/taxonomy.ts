@@ -1,0 +1,116 @@
+// TEMP — replaced by the real implementation in Part 2
+import type { Category, District, Division, Tag } from "@/types";
+
+export const divisions: Division[] = [
+  { id: "div_dhaka", slug: "dhaka", nameBn: "ঢাকা", nameEn: "Dhaka" },
+  { id: "div_ctg", slug: "chattogram", nameBn: "চট্টগ্রাম", nameEn: "Chattogram" },
+  { id: "div_raj", slug: "rajshahi", nameBn: "রাজশাহী", nameEn: "Rajshahi" },
+  { id: "div_khu", slug: "khulna", nameBn: "খুলনা", nameEn: "Khulna" },
+  { id: "div_bar", slug: "barishal", nameBn: "বরিশাল", nameEn: "Barishal" },
+  { id: "div_syl", slug: "sylhet", nameBn: "সিলেট", nameEn: "Sylhet" },
+  { id: "div_rng", slug: "rangpur", nameBn: "রংপুর", nameEn: "Rangpur" },
+  { id: "div_mym", slug: "mymensingh", nameBn: "ময়মনসিংহ", nameEn: "Mymensingh" },
+];
+
+// [slug, division id, Bangla, English, extra aliases]
+const D: [string, string, string, string, string[]][] = [
+  ["dhaka", "div_dhaka", "ঢাকা", "Dhaka", ["dhaka city", "dacca"]],
+  ["faridpur", "div_dhaka", "ফরিদপুর", "Faridpur", []],
+  ["gazipur", "div_dhaka", "গাজীপুর", "Gazipur", ["gajipur"]],
+  ["gopalganj", "div_dhaka", "গোপালগঞ্জ", "Gopalganj", []],
+  ["kishoreganj", "div_dhaka", "কিশোরগঞ্জ", "Kishoreganj", ["kishorganj"]],
+  ["madaripur", "div_dhaka", "মাদারীপুর", "Madaripur", []],
+  ["manikganj", "div_dhaka", "মানিকগঞ্জ", "Manikganj", []],
+  ["munshiganj", "div_dhaka", "মুন্সিগঞ্জ", "Munshiganj", ["munshigonj"]],
+  ["narayanganj", "div_dhaka", "নারায়ণগঞ্জ", "Narayanganj", ["narayangonj", "narayangonj"]],
+  ["narsingdi", "div_dhaka", "নরসিংদী", "Narsingdi", ["narshingdi"]],
+  ["rajbari", "div_dhaka", "রাজবাড়ী", "Rajbari", []],
+  ["shariatpur", "div_dhaka", "শরীয়তপুর", "Shariatpur", []],
+  ["tangail", "div_dhaka", "টাঙ্গাইল", "Tangail", []],
+  ["bandarban", "div_ctg", "বান্দরবান", "Bandarban", []],
+  ["brahmanbaria", "div_ctg", "ব্রাহ্মণবাড়িয়া", "Brahmanbaria", ["b.baria", "bbaria"]],
+  ["chandpur", "div_ctg", "চাঁদপুর", "Chandpur", []],
+  ["chattogram", "div_ctg", "চট্টগ্রাম", "Chattogram", ["chittagong", "ctg", "chottogram"]],
+  ["cumilla", "div_ctg", "কুমিল্লা", "Cumilla", ["comilla", "kumilla"]],
+  ["coxsbazar", "div_ctg", "কক্সবাজার", "Cox's Bazar", ["coxs bazar", "cox bazar"]],
+  ["feni", "div_ctg", "ফেনী", "Feni", []],
+  ["khagrachhari", "div_ctg", "খাগড়াছড়ি", "Khagrachhari", ["khagrachari"]],
+  ["lakshmipur", "div_ctg", "লক্ষ্মীপুর", "Lakshmipur", ["laxmipur", "lokkhipur"]],
+  ["noakhali", "div_ctg", "নোয়াখালী", "Noakhali", []],
+  ["rangamati", "div_ctg", "রাঙ্গামাটি", "Rangamati", []],
+  ["bogura", "div_raj", "বগুড়া", "Bogura", ["bogra"]],
+  ["joypurhat", "div_raj", "জয়পুরহাট", "Joypurhat", []],
+  ["naogaon", "div_raj", "নওগাঁ", "Naogaon", []],
+  ["natore", "div_raj", "নাটোর", "Natore", []],
+  ["chapainawabganj", "div_raj", "চাঁপাইনবাবগঞ্জ", "Chapainawabganj", ["chapai", "nawabganj"]],
+  ["pabna", "div_raj", "পাবনা", "Pabna", []],
+  ["rajshahi", "div_raj", "রাজশাহী", "Rajshahi", []],
+  ["sirajganj", "div_raj", "সিরাজগঞ্জ", "Sirajganj", ["sirajgonj"]],
+  ["bagerhat", "div_khu", "বাগেরহাট", "Bagerhat", []],
+  ["chuadanga", "div_khu", "চুয়াডাঙ্গা", "Chuadanga", []],
+  ["jashore", "div_khu", "যশোর", "Jashore", ["jessore", "josher"]],
+  ["jhenaidah", "div_khu", "ঝিনাইদহ", "Jhenaidah", ["jhenaidaha"]],
+  ["khulna", "div_khu", "খুলনা", "Khulna", ["kulna"]],
+  ["kushtia", "div_khu", "কুষ্টিয়া", "Kushtia", []],
+  ["magura", "div_khu", "মাগুরা", "Magura", []],
+  ["meherpur", "div_khu", "মেহেরপুর", "Meherpur", []],
+  ["narail", "div_khu", "নড়াইল", "Narail", []],
+  ["satkhira", "div_khu", "সাতক্ষীরা", "Satkhira", []],
+  ["barguna", "div_bar", "বরগুনা", "Barguna", []],
+  ["barishal", "div_bar", "বরিশাল", "Barishal", ["barisal"]],
+  ["bhola", "div_bar", "ভোলা", "Bhola", []],
+  ["jhalokati", "div_bar", "ঝালকাঠি", "Jhalokati", ["jhalokathi"]],
+  ["patuakhali", "div_bar", "পটুয়াখালী", "Patuakhali", []],
+  ["pirojpur", "div_bar", "পিরোজপুর", "Pirojpur", []],
+  ["habiganj", "div_syl", "হবিগঞ্জ", "Habiganj", ["hobiganj"]],
+  ["moulvibazar", "div_syl", "মৌলভীবাজার", "Moulvibazar", ["moulvi bazar"]],
+  ["sunamganj", "div_syl", "সুনামগঞ্জ", "Sunamganj", []],
+  ["sylhet", "div_syl", "সিলেট", "Sylhet", ["silet"]],
+  ["dinajpur", "div_rng", "দিনাজপুর", "Dinajpur", []],
+  ["gaibandha", "div_rng", "গাইবান্ধা", "Gaibandha", []],
+  ["kurigram", "div_rng", "কুড়িগ্রাম", "Kurigram", []],
+  ["lalmonirhat", "div_rng", "লালমনিরহাট", "Lalmonirhat", []],
+  ["nilphamari", "div_rng", "নীলফামারী", "Nilphamari", []],
+  ["panchagarh", "div_rng", "পঞ্চগড়", "Panchagarh", []],
+  ["rangpur", "div_rng", "রংপুর", "Rangpur", ["rongpur"]],
+  ["thakurgaon", "div_rng", "ঠাকুরগাঁও", "Thakurgaon", []],
+  ["jamalpur", "div_mym", "জামালপুর", "Jamalpur", []],
+  ["mymensingh", "div_mym", "ময়মনসিংহ", "Mymensingh", ["moymonsingh"]],
+  ["netrokona", "div_mym", "নেত্রকোণা", "Netrokona", ["netrakona"]],
+  ["sherpur", "div_mym", "শেরপুর", "Sherpur", []],
+];
+
+export const districts: District[] = D.map(([slug, divisionId, nameBn, nameEn, aliases]) => ({
+  id: `dis_${slug}`,
+  slug,
+  divisionId,
+  nameBn,
+  nameEn,
+  aliases: [slug, ...aliases],
+}));
+
+export const categories: Category[] = [
+  { id: "cat_admin", slug: "admin-office", nameBn: "প্রশাসন ও অফিস", nameEn: "Admin & Office", icon: "briefcase" },
+  { id: "cat_bank", slug: "bank-finance", nameBn: "ব্যাংক ও আর্থিক", nameEn: "Banking & Finance", icon: "landmark" },
+  { id: "cat_edu", slug: "education", nameBn: "শিক্ষা", nameEn: "Education", icon: "graduation-cap" },
+  { id: "cat_health", slug: "health", nameBn: "স্বাস্থ্য", nameEn: "Health", icon: "stethoscope" },
+  { id: "cat_eng", slug: "engineering", nameBn: "প্রকৌশল", nameEn: "Engineering", icon: "hard-hat" },
+  { id: "cat_it", slug: "it-software", nameBn: "আইটি ও সফটওয়্যার", nameEn: "IT & Software", icon: "laptop" },
+  { id: "cat_design", slug: "design", nameBn: "ডিজাইন ও সৃজনশীল", nameEn: "Design & Creative", icon: "palette" },
+  { id: "cat_defense", slug: "defense-law", nameBn: "প্রতিরক্ষা ও আইনশৃঙ্খলা", nameEn: "Defense & Law", icon: "shield" },
+  { id: "cat_ngo", slug: "ngo-development", nameBn: "এনজিও ও উন্নয়ন", nameEn: "NGO & Development", icon: "hand-heart" },
+  { id: "cat_tech", slug: "technical", nameBn: "কারিগরি ও চালক", nameEn: "Technical & Driving", icon: "wrench" },
+];
+
+export const tags: Tag[] = [
+  { id: "tag_1", slug: "fresher", nameBn: "ফ্রেশার" },
+  { id: "tag_2", slug: "female-quota", nameBn: "নারী কোটা" },
+  { id: "tag_3", slug: "no-fee", nameBn: "ফি নেই" },
+  { id: "tag_4", slug: "class-3", nameBn: "৩য় শ্রেণি" },
+  { id: "tag_5", slug: "class-4", nameBn: "৪র্থ শ্রেণি" },
+  { id: "tag_6", slug: "first-class", nameBn: "১ম শ্রেণি" },
+];
+
+export const districtById = new Map(districts.map((d) => [d.id, d]));
+export const divisionById = new Map(divisions.map((d) => [d.id, d]));
+export const categoryById = new Map(categories.map((c) => [c.id, c]));

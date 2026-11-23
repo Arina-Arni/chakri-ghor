@@ -187,6 +187,29 @@ export type ParsedSearch = {
   confidence: number;
 };
 
+export type CircularDetail = {
+  circular: Circular;
+  similar: CircularListItem[];
+  /** Posts of this circular the viewer has bookmarked. */
+  bookmarkedPostIds: string[];
+  /** postId → applicationId for posts already in the viewer's tracker. */
+  trackedPosts: Record<string, string>;
+};
+
+export type OrganizationDetail = {
+  organization: import("./taxonomy").Organization;
+  open: CircularListItem[];
+  past: CircularListItem[];
+};
+
+export type Taxonomy = {
+  divisions: import("./taxonomy").Division[];
+  districts: import("./taxonomy").District[];
+  categories: import("./taxonomy").Category[];
+  tags: import("./taxonomy").Tag[];
+  organizations: OrganizationSummary[];
+};
+
 export type LandingStats = {
   openCirculars: number;
   totalVacancies: number;
