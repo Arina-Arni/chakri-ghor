@@ -39,7 +39,8 @@ export function LoginForm() {
       else setFormError(e.message_bn);
     },
   });
-  const google = useMutation(() => signInWithGoogle(), { onSuccess: () => done(true, "seeker") });
+  // Google redirects the whole page; the callback route signs the user in.
+  const google = useMutation(() => signInWithGoogle(sp.get("next") ?? undefined));
   const summary = isSubmitted ? flattenErrors(errors, (p) => (p === "email" ? t("auth.email") : t("auth.password"))) : [];
 
   return (

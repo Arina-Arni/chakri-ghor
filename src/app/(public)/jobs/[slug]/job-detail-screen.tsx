@@ -35,7 +35,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Field } from "@/components/ui/field";
 import { Segmented } from "@/components/ui/segmented";
 import { Textarea } from "@/components/ui/textarea";
-import { createApplication, getCircular, reportCircularError, tailorResume } from "@/data";
+import { createApplication, getCircular, recordApplyClick, reportCircularError, tailorResume } from "@/data";
 import { formatDateTimeBn, formatMoneyBn, formatNumberBn, formatSalaryRangeBn, toBnDigits } from "@/domain/bn";
 import { displayStatus } from "@/domain/status";
 import { useServerNow } from "@/domain/countdown/use-server-now";
@@ -95,7 +95,7 @@ export function JobDetailScreen({ slug }: { slug: string }) {
   const router = useRouter();
   const now = useServerNow(60_000);
 
-  const track = useMutation((k: string, pid: string, status: "interested" | "applied") => createApplication(pid, k, status), {
+  const track = useMutation((k: string, pid: string, status: "saved" | "applied") => createApplication(pid, k, status), {
     onSuccess: (a) => {
       setAppliedPrompt(false);
       toast.success(t("detail.addedToTracker"), { action: { label: t("detail.viewTracker"), onClick: () => router.push(`/applications?open=${a.id}`) } });
@@ -146,6 +146,7 @@ export function JobDetailScreen({ slug }: { slug: string }) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => {
+            void recordApplyClick(c.id);
             if (role !== "guest" && !tracked) setTimeout(() => setAppliedPrompt(true), 800);
           }}
         >
@@ -167,7 +168,7 @@ export function JobDetailScreen({ slug }: { slug: string }) {
           </Link>
         </Button>
       ) : (
-        <Button variant="secondary" loading={track.pending} onClick={() => (role === "guest" ? requireLogin() : void track.run(post.id, "interested"))}>
+        <Button variant="secondary" loading={track.pending} onClick={() => (role === "guest" ? requireLogin() : void track.run(post.id, "saved"))}>
           <KanbanSquare aria-hidden />
           {t("detail.addToTracker")}
         </Button>

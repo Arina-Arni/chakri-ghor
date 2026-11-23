@@ -1,49 +1,40 @@
-// TEMP — replaced by the real implementation in Part 2 (Supabase Auth session)
 import type { Role } from "@/types";
 
-const KEY = "cr:mockRole";
+/**
+ * Client-side mirror of the server session, for synchronous UI checks. The server decides
+ * the role (profiles.role); this only caches what `getMe()` returned.
+ */
 const listeners = new Set<() => void>();
-let memoryRole: Role | null = null;
+let currentRole: Role = "guest";
 
-function readStored(): Role {
-  if (memoryRole) return memoryRole;
-  try {
-    const v = window.localStorage.getItem(KEY);
-    if (v === "guest" || v === "seeker" || v === "moderator" || v === "admin") return v;
-  } catch {
-    // storage blocked (private mode) — fall through to the default
-  }
-  return "guest";
-}
-
-/** Current mock role. On the server there is no session, so "guest". */
 export function getRole(): Role {
-  if (typeof window === "undefined") return "guest";
-  return readStored();
+  return currentRole;
 }
 
+/** Called by the session provider after `getMe()`. */
 export function setRole(role: Role): void {
-  memoryRole = role;
-  try {
-    window.localStorage.setItem(KEY, role);
-  } catch {
-    // keep the in-memory value
-  }
+  currentRole = role;
+}
+
+/** Ask every subscriber (session provider) to re-fetch the session: login, logout, account changes. */
+export function notifySessionChanged(): void {
   listeners.forEach((l) => l());
 }
 
-/** Subscribe to session changes (login, logout, role switch). Returns an unsubscribe. */
+/** Subscribe to session changes (this tab and Supabase auth events). Returns an unsubscribe. */
 export function onSessionChange(listener: () => void): () => void {
   listeners.add(listener);
-  const onStorage = (e: StorageEvent) => {
-    if (e.key === KEY) {
-      memoryRole = null;
-      listener();
-    }
-  };
-  window.addEventListener("storage", onStorage);
+  let unsubscribeAuth: (() => void) | null = null;
+  void import("@/lib/supabase-browser").then(({ supabaseBrowser }) => {
+    const client = supabaseBrowser();
+    if (!client || !listeners.has(listener)) return;
+    const { data } = client.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") listener();
+    });
+    unsubscribeAuth = () => data.subscription.unsubscribe();
+  });
   return () => {
     listeners.delete(listener);
-    window.removeEventListener("storage", onStorage);
+    unsubscribeAuth?.();
   };
 }

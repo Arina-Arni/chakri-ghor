@@ -1,86 +1,67 @@
-// TEMP — replaced by the real implementation in Part 2 (Supabase Auth)
 import type { Result, Role } from "@/types";
-import { fail, mutate, ok } from "./_runtime";
-import { setRole } from "./session";
-import { getDb } from "./fixtures/db";
+import {
+  changeEmailAction,
+  changePasswordAction,
+  checkSessionAction,
+  requestPasswordResetAction,
+  resetPasswordAction,
+  signInAction,
+  signInWithGoogleAction,
+  signOutAction,
+  signOutEverywhereAction,
+  signUpAction,
+} from "@/server/actions/auth";
+import { mutate } from "./_runtime";
+import { notifySessionChanged, setRole } from "./session";
 
-const RATE_LIMITED_EMAIL = "ratelimit@test.com";
-
-export async function signIn(email: string, password: string, idempotencyKey: string): Promise<Result<{ role: Role; onboardingCompleted: boolean }>> {
-  return mutate(idempotencyKey, () => {
-    if (email.toLowerCase() === RATE_LIMITED_EMAIL) return fail<{ role: Role; onboardingCompleted: boolean }>("RATE_LIMITED", { retryAfterSec: 60 });
-    if (password.length < 8 || email.toLowerCase().startsWith("wrong")) {
-      return fail<{ role: Role; onboardingCompleted: boolean }>("UNAUTHENTICATED", { message_bn: "ইমেইল বা পাসওয়ার্ড ঠিক নেই" });
-    }
-    const role: Role = email.startsWith("admin@") ? "admin" : email.startsWith("mod@") ? "moderator" : "seeker";
-    setRole(role);
-    return ok({ role, onboardingCompleted: getDb().profile.onboardingCompleted });
-  });
+function after<T>(r: Result<T>, onOk?: (d: T) => void): Result<T> {
+  if (r.ok) {
+    onOk?.(r.data);
+    notifySessionChanged();
+  }
+  return r;
 }
 
-export async function signInWithGoogle(): Promise<Result<{ role: Role }>> {
-  return mutate(`google-${Date.now()}`, () => {
-    setRole("seeker");
-    return ok({ role: "seeker" as Role });
-  });
+export async function signIn(email: string, password: string, idempotencyKey: string): Promise<Result<{ role: Role; onboardingCompleted: boolean }>> {
+  return after(await mutate(() => signInAction(email, password, idempotencyKey)), (d) => setRole(d.role));
+}
+
+/** Starts Google OAuth: resolves to the provider URL; the caller navigates there. */
+export async function signInWithGoogle(next?: string): Promise<Result<{ url: string }>> {
+  const r = await mutate(() => signInWithGoogleAction(next));
+  if (r.ok && typeof window !== "undefined") window.location.assign(r.data.url);
+  return r;
 }
 
 export async function signUp(input: { fullName: string; email: string; password: string }, idempotencyKey: string): Promise<Result<{ email: string }>> {
-  return mutate(idempotencyKey, () => {
-    if (input.email.toLowerCase() === RATE_LIMITED_EMAIL) return fail<{ email: string }>("RATE_LIMITED", { retryAfterSec: 60 });
-    if (input.email.toLowerCase() === "rahima@example.com") {
-      return fail<{ email: string }>("DUPLICATE", { message_bn: "এই ইমেইলে আগেই অ্যাকাউন্ট আছে", fields: { email: "এই ইমেইলে আগেই অ্যাকাউন্ট আছে" } });
-    }
-    const db = getDb();
-    db.profile.fullName = input.fullName;
-    db.profile.email = input.email;
-    db.profile.onboardingCompleted = false;
-    db.profile.onboardingStep = 1;
-    return ok({ email: input.email });
-  });
+  return mutate(() => signUpAction(input, idempotencyKey));
 }
 
-/** After the "check your email" screen, the demo lets the user continue as a new seeker. */
+/** "Continue" on the check-your-email screen: works once the confirmation link signed the user in. */
 export async function confirmEmailDemo(): Promise<Result<{ role: Role }>> {
-  return mutate(`confirm-${Date.now()}`, () => {
-    setRole("seeker");
-    return ok({ role: "seeker" as Role });
-  });
+  return after(await mutate(() => checkSessionAction()), (d) => setRole(d.role));
 }
 
 export async function requestPasswordReset(email: string, idempotencyKey: string): Promise<Result<{ sent: true }>> {
-  return mutate(idempotencyKey, () =>
-    email.toLowerCase() === RATE_LIMITED_EMAIL ? fail<{ sent: true }>("RATE_LIMITED", { retryAfterSec: 60 }) : ok({ sent: true as const }),
-  );
+  return mutate(() => requestPasswordResetAction(email, idempotencyKey));
 }
 
 export async function resetPassword(password: string, idempotencyKey: string): Promise<Result<{ done: true }>> {
-  return mutate(idempotencyKey, () => (password.length >= 8 ? ok({ done: true as const }) : fail<{ done: true }>("VALIDATION")));
+  return mutate(() => resetPasswordAction(password, idempotencyKey));
 }
 
 export async function signOut(): Promise<Result<{ done: true }>> {
-  setRole("guest");
-  return ok({ done: true as const });
+  return after(await mutate(() => signOutAction()), () => setRole("guest"));
 }
 
 export async function signOutEverywhere(idempotencyKey: string): Promise<Result<{ done: true }>> {
-  return mutate(idempotencyKey, () => ok({ done: true as const }));
+  return after(await mutate(() => signOutEverywhereAction(idempotencyKey)), () => setRole("guest"));
 }
 
 export async function changeEmail(newEmail: string, currentPassword: string, idempotencyKey: string): Promise<Result<{ pending: string }>> {
-  return mutate(idempotencyKey, () =>
-    currentPassword.length < 8
-      ? fail<{ pending: string }>("UNAUTHENTICATED", { message_bn: "পাসওয়ার্ড ঠিক নেই", fields: { currentPassword: "পাসওয়ার্ড ঠিক নেই" } })
-      : ok({ pending: newEmail }),
-  );
+  return mutate(() => changeEmailAction(newEmail, currentPassword, idempotencyKey));
 }
 
 export async function changePassword(currentPassword: string, newPassword: string, idempotencyKey: string): Promise<Result<{ done: true }>> {
-  return mutate(idempotencyKey, () =>
-    currentPassword.length < 8
-      ? fail<{ done: true }>("UNAUTHENTICATED", { message_bn: "বর্তমান পাসওয়ার্ড ঠিক নেই", fields: { currentPassword: "বর্তমান পাসওয়ার্ড ঠিক নেই" } })
-      : newPassword === currentPassword
-        ? fail<{ done: true }>("VALIDATION", { fields: { password: "নতুন পাসওয়ার্ড আগেরটির মতো হতে পারে না" } })
-        : ok({ done: true as const }),
-  );
+  return mutate(() => changePasswordAction(currentPassword, newPassword, idempotencyKey));
 }

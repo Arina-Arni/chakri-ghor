@@ -42,7 +42,8 @@ export function SignupForm() {
       applyServerErrors(e.fields, form.setError as never);
     },
   });
-  const google = useMutation(() => signInWithGoogle(), { onSuccess: () => router.push("/onboarding") });
+  // Google redirects the whole page; the callback route signs the user in.
+  const google = useMutation(() => signInWithGoogle("/onboarding"));
 
   return (
     <div className="space-y-5">

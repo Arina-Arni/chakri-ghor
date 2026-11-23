@@ -9,18 +9,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSession } from "@/components/providers/session-provider";
-import { setRole, signOut } from "@/data";
+import { signOut } from "@/data";
 import { t } from "@/i18n";
 import { notifySessionExpired } from "@/lib/events";
-import type { Role } from "@/types";
 
-/** Avatar menu. In development it also has a role switcher and a session-expiry trigger. */
+/** Avatar menu. In development it also has a session-expiry trigger. */
 export function UserMenu() {
   const { me, role } = useSession();
   const router = useRouter();
@@ -69,18 +66,10 @@ export function UserMenu() {
         {process.env.NODE_ENV !== "production" && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <Wrench className="size-3.5" aria-hidden />
-              {t("nav.roleSwitcher")}
-            </DropdownMenuLabel>
-            <DropdownMenuRadioGroup value={role} onValueChange={(v) => setRole(v as Role)}>
-              {(["seeker", "moderator", "admin"] as const).map((r) => (
-                <DropdownMenuRadioItem key={r} value={r}>
-                  {t(`nav.roles.${r}`)}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-            <DropdownMenuItem onSelect={() => notifySessionExpired()}>{t("states.sessionExpiredTitle")} (ডেভ)</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => notifySessionExpired()}>
+              <Wrench className="size-4" aria-hidden />
+              {t("states.sessionExpiredTitle")} (ডেভ)
+            </DropdownMenuItem>
           </>
         )}
         <DropdownMenuSeparator />
