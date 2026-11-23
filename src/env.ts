@@ -17,7 +17,42 @@ const serverSchema = publicSchema.extend({
   DIRECT_URL: z.string().regex(/^postgres(ql)?:\/\//, "must be a postgres:// URL").optional(),
   APP_URL: z.url(),
   IP_HASH_SALT: z.string().min(16),
+  // Part 3
+  CRON_SECRET: z.string().min(16),
+  PAYMENT_PROVIDER: z.enum(["mock"]).default("mock"),
+  PAYMENT_WEBHOOK_SECRET: z.string().min(16),
 });
+
+/**
+ * Optional integrations. Without GEMINI_API_KEY every AI feature uses its fallback (logged as
+ * provider_error); without RESEND_API_KEY emails stay in the outbox and in-app notifications
+ * still work. FAULT_INJECTION_ALLOWED is off unless exactly "true".
+ */
+const integrationSchema = z.object({
+  GEMINI_API_KEY: z.string().min(10).optional(),
+  GEMINI_MODEL: z.string().min(3).default("gemini-2.5-flash"),
+  RESEND_API_KEY: z.string().min(10).optional(),
+  EMAIL_FROM: z.string().min(3).default("Chakri Radar <noreply@chakri-radar.app>"),
+  FAULT_INJECTION_ALLOWED: z.string().optional().transform((v) => v === "true"),
+  /** Extra comma-separated hosts allowed for PDF-URL ingest (besides *.gov.bd, teletalk.com.bd). */
+  INGEST_ALLOWED_HOSTS: z.string().optional().transform((v) => (v ? v.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean) : [])),
+  AI_GLOBAL_RPM: z.coerce.number().int().min(1).default(60),
+});
+
+export type IntegrationEnv = z.infer<typeof integrationSchema>;
+
+/** Optional integration settings (never throws). */
+export function integrationEnv(): IntegrationEnv {
+  return integrationSchema.parse({
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY || undefined,
+    GEMINI_MODEL: process.env.GEMINI_MODEL || undefined,
+    RESEND_API_KEY: process.env.RESEND_API_KEY || undefined,
+    EMAIL_FROM: process.env.EMAIL_FROM || undefined,
+    FAULT_INJECTION_ALLOWED: process.env.FAULT_INJECTION_ALLOWED,
+    INGEST_ALLOWED_HOSTS: process.env.INGEST_ALLOWED_HOSTS,
+    AI_GLOBAL_RPM: process.env.AI_GLOBAL_RPM || undefined,
+  });
+}
 
 export type PublicEnv = z.infer<typeof publicSchema>;
 export type ServerEnv = z.infer<typeof serverSchema>;

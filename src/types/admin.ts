@@ -58,15 +58,21 @@ export type ReviewQueueItem = {
   fields: { key: string; labelBn: string; value: string; confidence: number }[];
 };
 
-export type WorkflowStepCode =
-  | "fetch_source"
-  | "extract_text"
-  | "ai_extract"
-  | "validate"
-  | "dedupe"
-  | "review_gate"
-  | "publish"
-  | "notify";
+/** Circular-ingestion steps in order (spec Part 3 §3.2). `apply_update` is the corrigendum branch. */
+export const WORKFLOW_STEPS = [
+  "validate_input",
+  "extract_text",
+  "ai_extract",
+  "normalize_validate",
+  "dedupe",
+  "apply_update",
+  "tag_categorize",
+  "create_draft",
+  "review_gate",
+  "publish",
+  "notify_matches",
+] as const;
+export type WorkflowStepCode = (typeof WORKFLOW_STEPS)[number];
 
 export type WorkflowStepStatus =
   | "pending"
@@ -99,7 +105,8 @@ export type WorkflowRunStatus =
   | "succeeded"
   | "failed"
   | "waiting_review"
-  | "cancelled";
+  | "cancelled"
+  | "duplicate";
 
 export type IngestSourceKind = "pdf_upload" | "text" | "pdf_url";
 
@@ -123,7 +130,7 @@ export type IngestInput =
   | { kind: "text"; text: string; failAtStep?: WorkflowStepCode }
   | { kind: "pdf_url"; url: string; failAtStep?: WorkflowStepCode };
 
-export type AiFeature = "search_parse" | "cv_parse" | "resume_tailor" | "circular_extract";
+export type AiFeature = "search_parse" | "cv_parse" | "resume_tailor" | "circular_extract" | "tagging";
 
 export type FaultMode =
   | "timeout"
@@ -135,6 +142,16 @@ export type FaultMode =
 
 export type BreakerState = "closed" | "open" | "half_open";
 
+export type AiOutcome =
+  | "success"
+  | "timeout"
+  | "rate_limited"
+  | "malformed"
+  | "invalid_semantics"
+  | "provider_error"
+  | "circuit_open"
+  | "fallback_used";
+
 export type FaultInjection = { feature: AiFeature; mode: FaultMode; expiresAt: IsoDateTime };
 
 export type AiHealthStats = {
@@ -144,6 +161,7 @@ export type AiHealthStats = {
     calls: number;
     successPct: number;
     fallbackPct: number;
+    p50Ms: number;
     p95Ms: number;
     breaker: { state: BreakerState; reopensAt: IsoDateTime | null };
   }[];
@@ -151,7 +169,7 @@ export type AiHealthStats = {
     id: Id;
     at: IsoDateTime;
     feature: AiFeature;
-    outcome: FaultMode | "fallback";
+    outcome: AiOutcome;
     attempts: number;
     latencyMs: number;
     message: string;

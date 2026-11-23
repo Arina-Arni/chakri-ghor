@@ -83,7 +83,7 @@ export type Plan = {
   quotas: Record<UsageFeature, number>;
 };
 
-export type SubscriptionStatus = "none" | "trialing" | "active" | "grace" | "expired";
+export type SubscriptionStatus = "none" | "trialing" | "active" | "past_due" | "grace" | "expired";
 
 export type Subscription = {
   planId: PlanId;

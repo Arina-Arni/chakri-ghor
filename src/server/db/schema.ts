@@ -76,7 +76,7 @@ export const cvJobStatusEnum = pgEnum("cv_job_status", ["processing", "succeeded
 export const notificationTypeEnum = pgEnum("notification_type", ["deadline", "new_match", "exam", "application", "system"]);
 export const searchModeEnum = pgEnum("search_mode", ["normal", "ai", "ai_fallback"]);
 export const idempotencyStatusEnum = pgEnum("idempotency_status", ["in_progress", "completed"]);
-export const subscriptionStatusEnum = pgEnum("subscription_status", ["none", "trialing", "active", "grace", "expired"]);
+export const subscriptionStatusEnum = pgEnum("subscription_status", ["none", "trialing", "active", "grace", "expired", "past_due"]);
 
 // ───────── 3.1 reference data ─────────
 
@@ -582,11 +582,17 @@ export const subscriptions = pgTable("subscriptions", {
   planId: text().notNull().default("free"),
   status: subscriptionStatusEnum().notNull().default("none"),
   trialEndsAt: ts(),
+  currentPeriodStart: ts(),
   currentPeriodEnd: ts(),
+  graceEndsAt: ts(),
   cancelAtPeriodEnd: boolean().notNull().default(false),
   trialUsed: boolean().notNull().default(false),
+  provider: text(),
+  providerRef: text(),
+  expiringNotifiedAt: ts(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
+  version: integer().notNull().default(1),
 });
 
 // ───────── 3.5 operations ─────────
@@ -654,4 +660,212 @@ export const appSettings = pgTable("app_settings", {
   updatedBy: uuid().references(() => profiles.userId, { onDelete: "set null" }),
   updatedAt: updatedAt(),
   version: integer().notNull().default(1),
+});
+
+// ───────── Part 3: AI (A06) ─────────
+
+export const aiOutcomeEnum = pgEnum("ai_outcome", [
+  "success",
+  "timeout",
+  "rate_limited",
+  "malformed",
+  "invalid_semantics",
+  "provider_error",
+  "circuit_open",
+  "fallback_used",
+]);
+export const breakerStateEnum = pgEnum("breaker_state", ["closed", "open", "half_open"]);
+
+export const aiCalls = pgTable(
+  "ai_calls",
+  {
+    id: id(),
+    feature: text().notNull(),
+    userId: uuid(),
+    model: text().notNull(),
+    outcome: aiOutcomeEnum().notNull(),
+    attempts: integer().notNull().default(0),
+    latencyMs: integer().notNull().default(0),
+    inputTokens: integer(),
+    outputTokens: integer(),
+    errorMessage: text(),
+    requestId: text(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("ai_calls_feature_created_idx").on(t.feature, t.createdAt)],
+);
+
+export const aiCache = pgTable("ai_cache", {
+  key: text().primaryKey(),
+  value: jsonb().notNull(),
+  expiresAt: ts().notNull(),
+  createdAt: createdAt(),
+});
+
+export const circuitBreakers = pgTable("circuit_breakers", {
+  name: text().primaryKey(),
+  state: breakerStateEnum().notNull().default("closed"),
+  failureCount: integer().notNull().default(0),
+  windowStartedAt: ts(),
+  openedAt: ts(),
+  updatedAt: updatedAt(),
+});
+
+export const faultInjections = pgTable(
+  "fault_injections",
+  {
+    id: id(),
+    adminId: uuid().notNull(),
+    feature: text().notNull(),
+    mode: text().notNull(),
+    expiresAt: ts().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index().on(t.adminId, t.expiresAt)],
+);
+
+// ───────── Part 3: workflow engine (A07) ─────────
+
+export const workflowRunStatusEnum = pgEnum("workflow_run_status", ["queued", "running", "waiting_review", "succeeded", "failed", "cancelled", "duplicate"]);
+export const workflowStepStatusEnum = pgEnum("workflow_step_status", ["pending", "running", "succeeded", "failed", "skipped", "waiting"]);
+
+export const workflowRuns = pgTable(
+  "workflow_runs",
+  {
+    id: id(),
+    type: text().notNull().default("circular_ingest"),
+    status: workflowRunStatusEnum().notNull().default("queued"),
+    input: jsonb().$type<Record<string, unknown>>().notNull(),
+    context: jsonb().$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
+    idempotencyKey: text().notNull(),
+    circularId: uuid().references(() => circulars.id, { onDelete: "set null" }),
+    createdBy: uuid().references(() => profiles.userId, { onDelete: "set null" }),
+    startedAt: ts(),
+    finishedAt: ts(),
+    error: text(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("workflow_runs_idempotency_unique").on(t.idempotencyKey), index().on(t.status, t.createdAt)],
+);
+
+export const workflowSteps = pgTable(
+  "workflow_steps",
+  {
+    id: id(),
+    runId: uuid()
+      .notNull()
+      .references(() => workflowRuns.id, { onDelete: "cascade" }),
+    name: text().notNull(),
+    position: integer().notNull(),
+    status: workflowStepStatusEnum().notNull().default("pending"),
+    attempts: integer().notNull().default(0),
+    maxAttempts: integer().notNull().default(3),
+    nextAttemptAt: ts(),
+    leaseOwner: text(),
+    leaseUntil: ts(),
+    input: jsonb(),
+    output: jsonb(),
+    errorCode: text(),
+    errorMessage: text(),
+    startedAt: ts(),
+    finishedAt: ts(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [unique("workflow_steps_run_name_unique").on(t.runId, t.name), index("workflow_steps_status_next_idx").on(t.status, t.nextAttemptAt)],
+);
+
+export const workflowEvents = pgTable(
+  "workflow_events",
+  {
+    id: id(),
+    runId: uuid()
+      .notNull()
+      .references(() => workflowRuns.id, { onDelete: "cascade" }),
+    stepName: text(),
+    type: text().notNull(),
+    fromStatus: text(),
+    toStatus: text(),
+    message: text(),
+    actorId: uuid(),
+    createdAt: createdAt(),
+  },
+  (t) => [index().on(t.runId, t.createdAt)],
+);
+
+// ───────── Part 3: email, plans, payments, usage, flags ─────────
+
+export const emailStatusEnum = pgEnum("email_status", ["pending", "sent", "failed", "dead"]);
+
+export const emailOutbox = pgTable(
+  "email_outbox",
+  {
+    id: id(),
+    notificationId: uuid().references(() => notifications.id, { onDelete: "cascade" }),
+    toEmail: text().notNull(),
+    template: text().notNull(),
+    payload: jsonb().$type<Record<string, unknown>>().notNull(),
+    status: emailStatusEnum().notNull().default("pending"),
+    attempts: integer().notNull().default(0),
+    nextAttemptAt: ts().notNull().defaultNow(),
+    lastError: text(),
+    providerMessageId: text(),
+    leaseUntil: ts(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("email_outbox_notification_unique").on(t.notificationId), index("email_outbox_status_next_idx").on(t.status, t.nextAttemptAt)],
+);
+
+export type PlanQuotas = { ai_search_per_day: number; cv_parse_per_day: number; tailored_resume_per_day: number };
+
+export const plans = pgTable("plans", {
+  code: text().primaryKey(),
+  nameBn: text().notNull(),
+  priceBdt: integer().notNull().default(0),
+  billingPeriod: text().notNull().default("daily"),
+  quotas: jsonb().$type<PlanQuotas>().notNull(),
+  featuresBn: text().array().notNull().default(sql`'{}'::text[]`),
+  active: boolean().notNull().default(true),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const payments = pgTable(
+  "payments",
+  {
+    id: id(),
+    subscriptionId: uuid()
+      .notNull()
+      .references(() => subscriptions.userId, { onDelete: "cascade" }),
+    amountBdt: integer().notNull(),
+    status: text().notNull(),
+    provider: text().notNull(),
+    providerTxnId: text().notNull(),
+    idempotencyKey: text().notNull(),
+    raw: jsonb().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("payments_provider_txn_unique").on(t.providerTxnId), uniqueIndex("payments_idempotency_unique").on(t.idempotencyKey)],
+);
+
+export const usageCounters = pgTable(
+  "usage_counters",
+  {
+    id: id(),
+    /** User id or salted IP hash. */
+    subject: text().notNull(),
+    feature: text().notNull(),
+    windowStart: ts().notNull(),
+    count: integer().notNull().default(0),
+  },
+  (t) => [uniqueIndex("usage_counters_subject_feature_window_unique").on(t.subject, t.feature, t.windowStart)],
+);
+
+export const featureFlags = pgTable("feature_flags", {
+  key: text().primaryKey(),
+  enabled: boolean().notNull().default(false),
+  payload: jsonb(),
+  updatedAt: updatedAt(),
 });
