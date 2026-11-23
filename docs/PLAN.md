@@ -47,3 +47,22 @@ switcher so guest and admin views can be reviewed.
 ## Out of scope for Part 1
 
 Database, real auth, AI calls, email, payments, the workflow engine, dark mode (P2).
+
+---
+
+# Part 2 plan — backend & core logic
+
+Goal: every Part 1 screen on real data (Supabase Postgres + Auth), business rules enforced on the
+server, no fixtures left. Ingest/workflow and AI-health stay simulated until Part 3.
+
+| # | Step | Spec | Output |
+|---|------|------|--------|
+| 1 | Domain logic + tests | §4 | `domain/state-machines`, `eligibility`, `matching`, `search-parser`, `cv`, `profile`, `taxonomy` |
+| 2 | Schema + migrations | §1, §3 | `server/db/schema.ts`, `drizzle/0000_init.sql`, `drizzle/0001_supabase.sql` (extensions, auth link, trigram, append-only, RLS) |
+| 3 | Server core | §2, §6 | `authz` (role matrix, ownership → 404), `audit`, `idempotency` (same transaction), `rate-limit`, error mapping |
+| 4 | Services | §5 | discovery, profile, cv, resumes, applications, notifications, dashboards, circulars, admin, billing, account |
+| 5 | API | §0 | reads: `POST /api/q/<name>`; writes: Server Actions; files: `/api/cv`, `/api/resumes/[id]/pdf`, `/api/circulars/[id]/pdf`; `/auth/*` |
+| 6 | Client data layer | §0 | `src/data/*` keeps the Part 1 signatures and `Result<T>` shape; fixtures deleted |
+| 7 | Auth & access | §2, §7 | `@supabase/ssr` cookies, `proxy.ts`, `ServerRoleGate`, security headers |
+| 8 | Seed | §8 | `npm run db:seed` — 40 circulars / 71 posts, demo user per role |
+| 9 | Tests & CI | §9 | unit + integration (PGlite / Postgres service), GitHub Actions, no-fixture check |

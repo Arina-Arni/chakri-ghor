@@ -130,3 +130,76 @@ titles otherwise widen the page at 360 px.
 The `?__state` preview is dev-only, so `npm run e2e` starts (or reuses) a dev server. Screenshots for
 `docs/UI.md` are taken from a production server to avoid the dev overlay. Tests count only visible
 `h1` elements because Cache Components keeps recently visited routes mounted but hidden.
+
+# Part 2 decisions
+
+## D21 — Status names follow the Part 2 spec
+
+Tracker: `saved → preparing → applied → admit_card → exam_scheduled → written_passed → viva → selected`
+(+ `rejected`, `withdrawn`). Circulars: `pending_review` and `closed` replace Part 1's `in_review`.
+Education `class_8` replaces `below_ssc`. Types, i18n and UI were updated together. `preparing` is
+optional (`saved → applied` is allowed). Admin "submit" on a rejected circular goes `rejected → draft →
+pending_review`, two legal hops. Archive is only from `closed`.
+
+## D22 — Reads through one Route Handler, writes through Server Actions
+
+Next.js dispatches Server Actions one at a time per client, so screens that load several things at
+once read through `POST /api/q/<name>` (a registry of validated read handlers). Mutations are Server
+Actions (built-in origin check). Route Handlers check `Origin` themselves. Both return the Part 1
+`Result<T>` / `{ error: { code, message_bn, fields?, requestId } }` shape with the right HTTP status.
+
+## D23 — Idempotency key and mutation share one transaction
+
+`runIdempotent` inserts the key row and runs the mutation in the same transaction: a concurrent
+duplicate waits on the unique index then replays the stored response; a failure rolls back the key
+too, so the same key can be retried. A key reused with a different payload is rejected. Supabase Auth
+calls (sign-in etc.) are not replayed from the store — they change cookies, not our rows.
+
+## D24 — Age reference date falls back to the publish date
+
+Eligibility counts age on `age_reference_date`, else `published_on`. A Feb‑29 birthday turns a year
+older on 1 March in non-leap years. Relaxations are stored as `{categoryBn, extraYears}` (the admin
+form's shape) and matched to the user's special categories by keyword.
+
+## D25 — Taxonomy ids are stable text ids
+
+Divisions, districts, categories and tags use ids like `dis_khulna` / `cat_bank` (the Part 1 contract
+and URLs) instead of integers. `eligible_district_ids` is `text[]`. The 11 spec categories replace
+Part 1's list.
+
+## D26 — `search_text` is maintained by the service, not a generated column
+
+A generated column cannot read other tables (organization and post titles), so the circular service
+(and the seed) build it with `buildCircularSearchText` on every save. Search = all tokens `ILIKE`
+or `word_similarity > 0.55`; relevance = trigram similarity + title hits.
+
+## D27 — "Only eligible" uses the eligibility function itself
+
+The filter computes `computeEligibility` for open circulars and passes the ids to SQL, so it always
+agrees with the panel (an integration test asserts the two sets are equal).
+
+## D28 — Workflow runs and AI health stay simulated (TEMP) until Part 3
+
+They live in `src/data/temp/` in the browser and never touch the database. The real review queue is
+`pending_review` circulars. Billing uses a `subscriptions` table and quotas from `app_settings`; the
+payment provider is Part 3, so checkout stays the clearly-labelled mock.
+
+## D29 — Server-side gate for protected route groups
+
+`proxy.ts` refreshes the session and redirects signed-out users to `/login?next=…`; the seeker and
+admin layouts also check role/status on the server (`ServerRoleGate`, inside Suspense). Neither is the
+security boundary — every service calls `authorize()` and checks ownership (someone else's row → 404).
+The Part 1 dev role switcher is gone: roles only come from `profiles.role`.
+
+## D30 — Integration tests run on PGlite locally, Postgres in CI
+
+`tests/integration` migrates a fresh database (Supabase's `auth.users`, `auth.uid()` and roles are
+stubbed) and seeds it. Locally that is PGlite (real Postgres in WASM, with pg_trgm/pgcrypto); CI uses
+a Postgres service via `TEST_DATABASE_URL`. Re-auth and Supabase calls are not part of these tests.
+
+## D31 — Seed data
+
+Hand-written Part 1 circulars plus template-generated ones (40 / 71 posts), deterministic ids
+(re-runs update in place), dates relative to seed time, `is_sample` on rows and "নমুনা তথ্য" in
+descriptions. A few sample search-log rows are inserted only into an empty log so the admin
+dashboard has content. Demo passwords go to the git-ignored `.seed-credentials.local.md`.
