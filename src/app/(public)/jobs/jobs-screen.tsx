@@ -281,7 +281,8 @@ export function JobsScreen() {
           </div>
         </aside>
 
-        <section aria-label={t("jobs.resultCount", { n: facets.data?.total ?? 0 })}>
+        <section aria-labelledby="results-h">
+          <h2 id="results-h" className="sr-only">{t("jobs.resultCount", { n: facets.data?.total ?? 0 })}</h2>
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <Button variant="secondary" className="lg:hidden" onClick={() => setSheetOpen(true)}>
               <SlidersHorizontal aria-hidden />

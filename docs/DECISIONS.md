@@ -79,3 +79,54 @@ from `@/lib/utils`.
 
 Vitest 5 requires `@types/node` 22+ as a peer; the project runs on Node 22, so the types match
 the runtime.
+
+## D13 — Entity fields are camelCase
+
+TypeScript entities in `src/types/*` use camelCase. Part 2's Drizzle schema maps them to
+snake_case columns (`casing: "snake_case"`), so the names stay the contract. `Result.error`
+keeps the spec's own field names (`message_bn`, `requestId`, `retryAfterSec`).
+
+## D14 — Gated pages opt out of instant-navigation validation
+
+Seeker and admin pages render behind a client-side role gate until Part 2 adds server auth, so
+Next.js cannot prerender their segment. Each gated `page.tsx` (and the two group layouts) exports
+`instant = false`. Part 2 can remove this once the session is read on the server.
+
+## D15 — Components that read the URL stream inside Suspense
+
+With Cache Components, `usePathname()`/`useSearchParams()` outside `<Suspense>` blocks
+prerendering of dynamic routes. `AppHeader`, `BottomNav`, `RequireRole`, `AdminShell` and
+`SessionExpiredDialog` wrap themselves in `<Suspense>`; dynamic pages read `params` with
+`params.then(...)` inside `<Suspense>`.
+
+## D16 — Fixture state is in memory per tab
+
+Mutations change an in-memory store created on first use (`data/fixtures/db.ts`). A full reload
+resets it; client-side navigation keeps it. Only the mock role and form drafts persist (localStorage).
+Fixture dates are relative to "now" so "closing in 2 hours" stays true in every demo.
+
+## D17 — Chart palette and accessibility
+
+Charts follow the dataviz method: single-series charts use brand teal; multi-series charts use the
+first three validated categorical slots (`#2a78d6`, `#eb6834`, `#1baf7a`). The status colors
+(success/warning/danger) failed the CVD/normal-vision checks when stacked, so they are not used as
+series colors. Each chart has a visually hidden data table; Recharts' own keyboard layer is off so
+nothing focusable sits inside the `aria-hidden` SVG wrapper. Legend text uses ink, not series color.
+
+## D18 — Sample-data notice and demo triggers
+
+While `USING_SAMPLE_DATA` is true the footer says the data is a demo. Edge states are reachable on
+purpose: `ratelimit@test.com` (rate limit), CV file names with `scan`/`locked`, `?__state=…`.
+These live only in TEMP fixtures and disappear with Part 2.
+
+## D19 — Input borders and list items
+
+Input borders use `#7d8ba0` (≥ 3:1 on white, WCAG 1.4.11) instead of the lighter divider color.
+`li { min-width: 0 }` globally, because grid items default to `min-width: auto` and long Bangla
+titles otherwise widen the page at 360 px.
+
+## D20 — E2E runs against `next dev` by default
+
+The `?__state` preview is dev-only, so `npm run e2e` starts (or reuses) a dev server. Screenshots for
+`docs/UI.md` are taken from a production server to avoid the dev overlay. Tests count only visible
+`h1` elements because Cache Components keeps recently visited routes mounted but hidden.

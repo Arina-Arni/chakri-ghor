@@ -19,7 +19,7 @@ npm run typecheck
 npm run lint
 npm test             # unit tests (Vitest)
 npx playwright install chromium   # once
-npm run e2e          # smoke + accessibility (Playwright + axe)
+npm run e2e          # smoke + axe + keyboard + UI states (Playwright, dev server)
 ```
 
 Dev-only helpers:
