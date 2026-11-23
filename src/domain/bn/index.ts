@@ -138,6 +138,74 @@ export function formatSalaryRangeBn(min: number | null, max: number | null): str
   return null;
 }
 
+export type ParsedDate = { iso: string } | { error: "format" | "impossible" };
+
+/**
+ * Parse a calendar date typed by a person: "DD/MM/YYYY", "DD-MM-YYYY", "DD.MM.YYYY" or
+ * "YYYY-MM-DD", with Bangla or English digits. Rejects dates that don't exist (৩১/০২/২০২৬).
+ */
+export function parseDateInput(input: string): ParsedDate {
+  const s = toEnDigits(input).trim();
+  let y: number, m: number, d: number;
+  let match = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(s);
+  if (match) [d, m, y] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  else {
+    match = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s);
+    if (!match) return { error: "format" };
+    [y, m, d] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  }
+  if (m < 1 || m > 12 || d < 1 || y < 1900 || y > 2100) return { error: "impossible" };
+  const probe = new Date(Date.UTC(y, m - 1, d));
+  if (probe.getUTCMonth() !== m - 1 || probe.getUTCDate() !== d) return { error: "impossible" };
+  return { iso: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}` };
+}
+
+/** Parse "HH:mm" (24 h) with either digit set. */
+export function parseTimeInput(input: string): string | null {
+  const match = /^(\d{1,2})[:.](\d{2})$/.exec(toEnDigits(input).trim());
+  if (!match) return null;
+  const [h, m] = [Number(match[1]), Number(match[2])];
+  if (h > 23 || m > 59) return null;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/** "2026-12-17" → "১৭/১২/২০২৬" for date inputs. */
+export function formatDateInput(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return y && m && d ? toBnDigits(`${d}/${m}/${y}`) : "";
+}
+
+/** UTC instant → { date: "১৭/১২/২০২৬", time: "১৭:০০" } in Asia/Dhaka for date-time inputs. */
+export function formatDateTimeInput(value: DateInput | null | undefined): { date: string; time: string } {
+  if (value == null || value === "") return { date: "", time: "" };
+  const p = dhakaParts(value);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return {
+    date: toBnDigits(`${pad(p.day)}/${pad(p.month)}/${p.year}`),
+    time: toBnDigits(`${pad(p.hour)}:${pad(p.minute)}`),
+  };
+}
+
+/** Whole years between a birth date and a reference date (both "YYYY-MM-DD"). */
+export function ageOn(dobIso: string, refIso: string): { years: number; months: number; days: number } {
+  const [by, bm, bd] = dobIso.split("-").map(Number);
+  const [ry, rm, rd] = refIso.split("-").map(Number);
+  let years = ry - by;
+  let months = rm - bm;
+  let days = rd - bd;
+  if (days < 0) {
+    months -= 1;
+    // days in the month before the reference month
+    days += new Date(Date.UTC(ry, rm - 1, 0)).getUTCDate();
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+  return { years, months, days };
+}
+
 /** Parse a number typed with Bangla or English digits (commas allowed). */
 export function parseNumberInput(input: string): number | null {
   const clean = toEnDigits(input).replace(/[,\s৳]/g, "");

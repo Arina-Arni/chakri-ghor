@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  ageOn,
+  formatDateInput,
+  formatDateTimeInput,
+  parseDateInput,
+  parseTimeInput,
   dhakaDateKey,
   dhakaToUtc,
   formatDateBn,
@@ -70,6 +75,36 @@ describe("relative time", () => {
     expect(formatRelativeBn("2026-11-23T07:00:00Z", now)).toBe("৩ ঘণ্টা আগে");
     expect(formatRelativeBn("2026-11-26T10:00:00Z", now)).toBe("৩ দিন পরে");
     expect(formatRelativeBn("2026-11-23T09:59:40Z", now)).toBe("এইমাত্র");
+  });
+});
+
+describe("date input parsing", () => {
+  it("accepts Bangla and English digits in DD/MM/YYYY", () => {
+    expect(parseDateInput("১৭/১২/২০২৬")).toEqual({ iso: "2026-12-17" });
+    expect(parseDateInput("5-1-1999")).toEqual({ iso: "1999-01-05" });
+    expect(parseDateInput("2026-12-17")).toEqual({ iso: "2026-12-17" });
+  });
+  it("rejects impossible dates", () => {
+    expect(parseDateInput("৩১/০২/২০২৬")).toEqual({ error: "impossible" });
+    expect(parseDateInput("29/02/2025")).toEqual({ error: "impossible" });
+    expect(parseDateInput("29/02/2024")).toEqual({ iso: "2024-02-29" });
+    expect(parseDateInput("12/13/2026")).toEqual({ error: "impossible" });
+  });
+  it("rejects garbage", () => {
+    expect(parseDateInput("কাল")).toEqual({ error: "format" });
+  });
+  it("parses times", () => {
+    expect(parseTimeInput("১৭:০০")).toBe("17:00");
+    expect(parseTimeInput("9.05")).toBe("09:05");
+    expect(parseTimeInput("24:00")).toBeNull();
+  });
+  it("formats inputs back in Bangla digits", () => {
+    expect(formatDateInput("2026-12-17")).toBe("১৭/১২/২০২৬");
+    expect(formatDateTimeInput("2026-12-17T11:00:00Z")).toEqual({ date: "১৭/১২/২০২৬", time: "১৭:০০" });
+  });
+  it("computes age on a reference date", () => {
+    expect(ageOn("1995-01-02", "2026-12-31")).toEqual({ years: 31, months: 11, days: 29 });
+    expect(ageOn("2000-03-15", "2026-03-14")).toEqual({ years: 25, months: 11, days: 27 });
   });
 });
 
