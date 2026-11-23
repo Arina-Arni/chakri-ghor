@@ -1,5 +1,5 @@
 import { test } from "@playwright/test";
-import { asRole, ROUTES, settle } from "./routes";
+import { asRole, hasCredentials, ROUTES, settle } from "./routes";
 
 /**
  * Captures every screen at mobile (360) and desktop (1280) width for docs/UI.md.
@@ -12,6 +12,7 @@ for (const r of ROUTES) {
     for (const [label, width] of [["mobile", 360], ["desktop", 1280]] as const) {
       const ctx = await browser.newContext({ viewport: { width, height: width === 360 ? 780 : 900 }, locale: "bn-BD", timezoneId: "Asia/Dhaka" });
       const page = await ctx.newPage();
+      test.skip(!hasCredentials(r.role), "needs E2E_* credentials for a seeded deployment");
       await asRole(page, r.role);
       await page.goto(r.path);
       await settle(page);

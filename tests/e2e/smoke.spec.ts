@@ -1,11 +1,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { asRole, ROUTES, settle } from "./routes";
+import { asRole, hasCredentials, ROUTES, settle } from "./routes";
 
 for (const r of ROUTES) {
   test(`${r.name} renders without layout breaks`, async ({ page }, info) => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(String(e)));
+    test.skip(!hasCredentials(r.role), "needs E2E_* credentials for a seeded deployment");
     await asRole(page, r.role);
     await page.goto(r.path);
     await settle(page);

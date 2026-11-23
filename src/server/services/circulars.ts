@@ -469,6 +469,14 @@ export async function transitionInTx(
       dedupe: `cancel:${id}`,
     });
   }
+  // Public pages and the sitemap pick up the change (no-op outside a request).
+  try {
+    const { revalidateTag } = await import("next/cache");
+    revalidateTag("sitemap", "max");
+    revalidateTag(`circular:${c.slug}`, "max");
+  } catch {
+    // tests / scripts
+  }
   // A moderator decision resumes (or closes) an ingestion run waiting at its review gate.
   if ((action === "approve" || action === "reject") && from === "pending_review") {
     const { resumeAfterReview } = await import("./workflows");

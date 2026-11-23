@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { asRole, settle } from "./routes";
+import { asRole, hasCredentials, settle } from "./routes";
 
 // The ?__state preview is development-only, so these run against `next dev`.
 test.describe("UI states via ?__state (spec §2.6)", () => {
@@ -17,6 +17,7 @@ test.describe("UI states via ?__state (spec §2.6)", () => {
   });
 
   test("error shows a Bangla message, retry and a reference id", async ({ page }) => {
+    test.skip(!hasCredentials("seeker"), "needs E2E_* credentials for a seeded deployment");
     await asRole(page, "seeker");
     await page.goto("/dashboard?__state=error");
     await settle(page);
@@ -36,6 +37,7 @@ test.describe("UI states via ?__state (spec §2.6)", () => {
   });
 
   test("edit conflict opens the conflict dialog", async ({ page }) => {
+    test.skip(!hasCredentials("seeker"), "needs E2E_* credentials for a seeded deployment");
     await asRole(page, "seeker");
     await page.goto("/profile?__state=conflict");
     await settle(page);

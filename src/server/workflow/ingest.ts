@@ -10,8 +10,7 @@ import { computeEligibility } from "@/domain/eligibility";
 import { extractionSchema, heuristicExtraction, normalizeExtraction, type Extraction, type Flag, type Normalized } from "@/domain/ingest";
 import { buildCircularSearchText, circularMatchesFilters } from "@/domain/search-parser";
 import { categories, districtById, districts, divisions, tags } from "@/domain/taxonomy";
-import { CV_MAX_BYTES } from "@/domain/cv";
-import { failed, finish, retry, skipped, succeeded, waiting, type StepContext, type StepResult, type WorkflowDef } from "@/lib/workflow/engine";
+import { failed, finish, retry, succeeded, waiting, type StepContext, type StepResult, type WorkflowDef } from "@/lib/workflow/engine";
 import type { Ctx, UserRole } from "@/server/context";
 import type { Db } from "@/server/db/client";
 import { loadCirculars } from "@/server/db/queries/circulars";
@@ -356,9 +355,9 @@ async function publish(s: StepContext): Promise<StepResult> {
   const ctx = await runCtx(s);
   await s.db.transaction((tx) => transitionInTx(ctx, tx, circularId, "approve", {}, c.version));
   try {
-    const { revalidatePath } = await import("next/cache");
-    revalidatePath("/sitemap.xml");
-    revalidatePath(`/jobs/${c.slug}`);
+    const { revalidateTag } = await import("next/cache");
+    revalidateTag("sitemap", "max");
+    revalidateTag(`circular:${c.slug}`, "max");
   } catch {
     // Outside a request (worker/tests): nothing cached to revalidate.
   }
@@ -478,4 +477,3 @@ export const ingestWorkflow: WorkflowDef = {
 
 export const WORKFLOWS: Record<string, WorkflowDef> = { circular_ingest: ingestWorkflow };
 
-export { skipped, CV_MAX_BYTES };

@@ -16,6 +16,9 @@ const hind = Hind_Siliguri({
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
+  alternates: { canonical: "/" },
+  openGraph: { type: "website", locale: "bn_BD", siteName: t("brand.name") },
   title: { default: `${t("brand.name")} — ${t("brand.tagline")}`, template: `%s · ${t("brand.name")}` },
   description: t("landing.heroSub"),
   applicationName: t("brand.name"),

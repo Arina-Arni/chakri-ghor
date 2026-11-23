@@ -4,8 +4,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseHost = supabaseUrl ? new URL(supabaseUrl).origin : "";
 
 /**
- * Content Security Policy. Shipped as Report-Only first (spec §7); switch the header name to
- * `Content-Security-Policy` once reports are clean (CSP_ENFORCE=1).
+ * Content Security Policy — enforced (Part 3 §6). It was report-only in Part 2;
+ * CSP_REPORT_ONLY=1 switches back for debugging.
  */
 const csp = [
   "default-src 'self'",
@@ -22,7 +22,7 @@ const csp = [
 ].join("; ");
 
 const securityHeaders = [
-  { key: process.env.CSP_ENFORCE === "1" ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only", value: csp },
+  { key: process.env.CSP_REPORT_ONLY === "1" ? "Content-Security-Policy-Report-Only" : "Content-Security-Policy", value: csp },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },

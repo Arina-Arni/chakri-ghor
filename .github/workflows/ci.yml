@@ -29,13 +29,39 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Dependency audit (high and critical)
+        run: npm audit --omit=dev --audit-level=high
       - name: No fixture imports
         run: npm run check:fixtures
       - run: npm run typecheck
       - run: npm run lint -- --max-warnings=0
-      - name: Unit tests
+      - name: Unit tests (domain, A06 client, state machines)
         run: npm test
-      - name: Integration tests (real Postgres)
+      - name: Integration tests (real Postgres; A07 workflow, scheduler, payments, authz)
         run: npm run test:integration
       - name: Build
         run: npm run build
+      - name: No secrets in the client bundle
+        run: npm run check:secrets
+
+  e2e:
+    # Runs against a deployed preview (Vercel) when its URL and demo credentials are configured
+    # as repository secrets; otherwise the job is skipped.
+    needs: check
+    runs-on: ubuntu-latest
+    if: ${{ vars.E2E_BASE_URL != '' }}
+    env:
+      E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
+      E2E_SEEKER_EMAIL: ${{ secrets.E2E_SEEKER_EMAIL }}
+      E2E_SEEKER_PASSWORD: ${{ secrets.E2E_SEEKER_PASSWORD }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --grep-invert "UI states via"

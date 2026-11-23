@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { asRole, settle } from "./routes";
+import { asRole, hasCredentials, settle } from "./routes";
 
 /** Press Tab until the focused element matches, like a keyboard-only user would. */
 async function tabTo(page: Page, matches: (el: { tag: string; text: string; label: string | null }) => boolean, max = 80) {
@@ -18,6 +18,7 @@ test.describe("keyboard-only walkthrough (spec §11)", () => {
   test.beforeEach(({}, info) => test.skip(info.project.name !== "desktop", "desktop flow"));
 
   test("search → job detail → wizard → tracker → resume editor", async ({ page }) => {
+    test.skip(!hasCredentials("seeker"), "needs E2E_* credentials for a seeded deployment");
     await asRole(page, "seeker");
 
     // 1. Skip link, then search with the keyboard.
