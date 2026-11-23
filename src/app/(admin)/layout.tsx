@@ -1,6 +1,9 @@
 import { AdminShell } from "@/components/layout/admin-shell";
 import { RequireRole } from "@/components/layout/require-role";
 
+/** Gated on the client until Part 2 adds server auth, so navigations here may block. */
+export const instant = false;
+
 export default function AdminLayout({ children }: LayoutProps<"/">) {
   return (
     <RequireRole roles={["moderator", "admin"]}>
