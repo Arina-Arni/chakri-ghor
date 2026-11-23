@@ -2,7 +2,9 @@ import "server-only";
 import { and, asc, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { dhakaDateKey } from "@/domain/bn";
 import { computeEligibility, passesEligibleOnly } from "@/domain/eligibility";
-import { normalizeQuery, parseQueryRules } from "@/domain/search-parser";
+import { normalizeQuery } from "@/domain/search-parser";
+import { aiParseSearch } from "@/server/ai/features";
+import { consumeQuota } from "@/server/quota";
 import { categories, districtById, districts, divisions, tags as tagList } from "@/domain/taxonomy";
 import { t } from "@/i18n";
 import { EDUCATION_LEVELS } from "@/types";
@@ -446,17 +448,19 @@ export async function getZeroResultSuggestions(ctx: Ctx, db: DbOrTx, f: JobFilte
   return out.filter((s) => s.resultCount > 0).sort((a, b) => b.resultCount - a.resultCount);
 }
 
-/** Rule-based query understanding (Part 3 puts the AI in front). Logged to search_logs. */
+/**
+ * AI query understanding (A06): quota first, then the AI client (4 s budget, cache, breaker);
+ * any failure falls back to the rule-based parser. Logged to search_logs with the mode used.
+ */
 export async function parseSearchQuery(ctx: Ctx, db: DbOrTx, text: string): Promise<ParsedSearch> {
   authorize(ctx.actor, "circular.browse");
-  const parsed = parseQueryRules(text, { districts, divisions, categories });
-  const result: ParsedSearch = { ...parsed, mode: "fallback" };
+  await consumeQuota(ctx, db, "ai_search");
+  const { parsed } = await aiParseSearch(ctx, text);
   const where = await whereFor(ctx, db, parsed.filters, ctx.now());
   const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(circulars).where(where);
-  await logSearch(ctx, db, text, parsed.filters, "ai_fallback", Number(n));
-  return result;
+  await logSearch(ctx, db, text, parsed.filters, parsed.mode === "ai" ? "ai" : "ai_fallback", Number(n));
+  return parsed;
 }
-
 /** Count once per visitor per day (views and apply clicks). Returns whether it counted. */
 async function bumpCounter(ctx: Ctx, db: DbOrTx, circularId: string, kind: "view" | "apply"): Promise<boolean> {
   const inserted = await db

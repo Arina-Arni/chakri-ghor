@@ -178,6 +178,56 @@ export function parseQueryRules(text: string, tax: ParserTaxonomy): Omit<ParsedS
 }
 
 /**
+ * Does one circular satisfy a saved search's filters? Mirrors the SQL filters (used to alert
+ * seekers about a newly published circular without running one query per saved search).
+ */
+export function circularMatchesFilters(
+  c: {
+    searchText: string;
+    divisionId: string | null;
+    districtId: string | null;
+    sector: string;
+    categoryId: string;
+    organizationId: string;
+    jobType: string;
+    workMode: string;
+    minSalary: number | null;
+    maxSalary: number | null;
+    educationLevels: string[];
+  },
+  f: JobFilters,
+): boolean {
+  const inList = (list: string[] | undefined, v: string | null) => !list?.length || (v != null && list.includes(v));
+  if (!inList(f.division, c.divisionId) || !inList(f.district, c.districtId) || !inList(f.sector, c.sector)) return false;
+  if (!inList(f.category, c.categoryId) || !inList(f.organization, c.organizationId)) return false;
+  if (!inList(f.jobType, c.jobType) || !inList(f.workMode, c.workMode)) return false;
+  if (f.education?.length && !c.educationLevels.some((e) => f.education!.includes(e as never))) return false;
+  if (f.salaryMin != null && (c.maxSalary == null || c.maxSalary < f.salaryMin)) return false;
+  if (f.salaryMax != null && (c.minSalary == null || c.minSalary > f.salaryMax)) return false;
+  if (f.q?.trim()) {
+    const hay = c.searchText.toLowerCase();
+    if (!normalizeQuery(f.q).split(" ").filter(Boolean).every((tk) => hay.includes(tk))) return false;
+  }
+  return true;
+}
+
+/** Chips for a filter set (AI path builds filters first, then shows them as chips). */
+export function chipsFromFilters(f: JobFilters, tax: ParserTaxonomy): SearchChip[] {
+  const chips: SearchChip[] = [];
+  for (const id of f.district ?? []) chips.push({ key: "district", value: id, labelBn: tax.districts.find((d) => d.id === id)?.nameBn ?? id });
+  for (const id of f.division ?? []) chips.push({ key: "division", value: id, labelBn: `${tax.divisions.find((d) => d.id === id)?.nameBn ?? id} বিভাগ` });
+  for (const s of f.sector ?? []) chips.push({ key: "sector", value: s, labelBn: t(`enums.sector.${s}`) });
+  for (const id of f.category ?? []) chips.push({ key: "category", value: id, labelBn: tax.categories.find((c) => c.id === id)?.nameBn ?? id });
+  for (const e of f.education ?? []) chips.push({ key: "education", value: e, labelBn: t(`enums.education.${e}`) });
+  for (const j of f.jobType ?? []) chips.push({ key: "jobType", value: j, labelBn: t(`enums.jobType.${j}`) });
+  for (const w of f.workMode ?? []) chips.push({ key: "workMode", value: w, labelBn: t(`enums.workMode.${w}`) });
+  if (f.salaryMin != null) chips.push({ key: "salaryMin", value: String(f.salaryMin), labelBn: `৳${formatNumberBn(f.salaryMin)}+` });
+  if (f.deadlineWithin) chips.push({ key: "deadlineWithin", value: f.deadlineWithin, labelBn: t(`enums.deadlineWithin.${f.deadlineWithin}`) });
+  if (f.q) chips.push({ key: "q", value: f.q, labelBn: f.q });
+  return chips;
+}
+
+/**
  * The trigram-indexed `circulars.search_text`: titles, organization names, post titles and
  * keywords, places, category and tags — lower-cased, single-spaced.
  */

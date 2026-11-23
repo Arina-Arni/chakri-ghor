@@ -1,12 +1,14 @@
 import "server-only";
 import { and, desc, eq, gte, inArray } from "drizzle-orm";
-import { CV_MAX_BYTES, CV_MAX_PDF_PAGES, extractCvFields, pdfLooksEncrypted, sniffCvType, type CvKind } from "@/domain/cv";
+import { CV_MAX_BYTES, CV_MAX_PDF_PAGES, pdfLooksEncrypted, sniffCvType, type CvKind } from "@/domain/cv";
 import type { CvParseResult } from "@/types";
 import { requireUser } from "@/server/authz";
 import type { Ctx } from "@/server/context";
 import type { DbOrTx } from "@/server/db/client";
 import { cvParseJobs, profiles } from "@/server/db/schema";
 import { AppError } from "@/server/errors";
+import { aiParseCv } from "@/server/ai/features";
+import { consumeQuota } from "@/server/quota";
 
 const REUSE_MS = 24 * 60 * 60 * 1000;
 const MIME: Record<CvKind, string> = {
@@ -80,15 +82,20 @@ export async function parseCv(
     .limit(1);
   if (previous?.result) return previous.result as CvParseResult;
 
+  // Same file within 24 h was answered above for free; a new parse counts against the quota.
+  await consumeQuota(ctx, db, "cv_parse");
   const [job] = await db
     .insert(cvParseJobs)
     .values({ userId, fileSha256: sha, mime: MIME[kind], sizeBytes: file.bytes.length, status: "processing" })
     .returning({ id: cvParseJobs.id });
   try {
     const text = await extractText(kind, file.bytes);
-    if (text.replace(/\s/g, "").length < 20) throw new AppError("CV_UNREADABLE");
-    const result = extractCvFields(text);
-    await db.update(cvParseJobs).set({ status: "fallback", result, updatedAt: new Date() }).where(eq(cvParseJobs.id, job.id));
+    const scanned = text.replace(/\s/g, "").length < 50;
+    if (scanned && kind !== "pdf") throw new AppError("CV_UNREADABLE");
+    // AI path (A06) with the regex extraction as its fallback; scanned PDFs go to Gemini vision.
+    const { result, mode } = await aiParseCv(ctx, { text, sha256: sha, pdfBase64: scanned ? Buffer.from(file.bytes).toString("base64") : null });
+    if (scanned && result.status === "partial" && Object.keys(result.extracted).length === 0) throw new AppError("CV_UNREADABLE");
+    await db.update(cvParseJobs).set({ status: mode === "ai" ? "succeeded" : "fallback", result, updatedAt: new Date() }).where(eq(cvParseJobs.id, job.id));
     return result;
   } catch (e) {
     const code = e instanceof AppError ? e.code : "CV_UNREADABLE";

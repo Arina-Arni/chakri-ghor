@@ -8,6 +8,9 @@ import type { Ctx } from "@/server/context";
 import type { DbOrTx, Tx } from "@/server/db/client";
 import { circularPosts, circulars, resumeVersions, resumes } from "@/server/db/schema";
 import { AppError } from "@/server/errors";
+import { t } from "@/i18n";
+import { aiTailorChanges } from "@/server/ai/features";
+import { consumeQuota } from "@/server/quota";
 import { loadProfile } from "./profile";
 
 type ResumeRow = typeof resumes.$inferSelect;
@@ -220,33 +223,55 @@ export function tailorContent(content: ResumeContent, required: string[], prefer
 }
 
 /** Create (or refresh) a resume tailored to a post, from the source resume (usually the base). */
-export async function tailorResume(ctx: Ctx, tx: Tx, sourceId: string, postId: string): Promise<TailorResult> {
+export type TailorPlan = {
+  sourceId: string;
+  postId: string;
+  content: ResumeContent;
+  changes: ResumeChange[];
+  mode: "ai" | "fallback";
+  baseVersion: number | null;
+};
+
+/**
+ * Step 1 (outside any transaction): quota, deterministic reorder and the AI rewrite. The AI
+ * call can take up to 25 s, so no rows are locked while it runs.
+ */
+export async function prepareTailor(ctx: Ctx, db: DbOrTx, sourceId: string, postId: string): Promise<TailorPlan> {
   const userId = requireUser(ctx.actor, "seeker.own", { mutation: true });
-  const source = await ownResume(ctx, tx, sourceId, true);
+  const source = await ownResume(ctx, db, sourceId, true);
+  const meta = (await postMeta(db, [postId])).get(postId);
+  if (!meta) throw new AppError("NOT_FOUND");
+  await consumeQuota(ctx, db, "resume_tailor");
+  const [target] = await db.select().from(resumes).where(and(eq(resumes.userId, userId), eq(resumes.circularPostId, postId)));
+  const base = target ? target.content : source.content;
+  const template = tailorContent(base, meta.required, meta.preferred);
+  // AI rewrite (A06) on top of the deterministic reorder; the guard compares against the source resume.
+  const aiPart = await aiTailorChanges(ctx, template.content, { required: meta.required, preferred: meta.preferred }, JSON.stringify(source.content));
+  return { sourceId, postId, content: template.content, changes: [...template.changes, ...aiPart.changes], mode: aiPart.mode, baseVersion: target?.version ?? null };
+}
+
+/** Step 2 (inside the idempotent transaction): write the tailored resume. */
+export async function tailorResume(ctx: Ctx, tx: Tx, sourceId: string, postId: string, plan?: TailorPlan): Promise<TailorResult> {
+  const userId = requireUser(ctx.actor, "seeker.own", { mutation: true });
+  const p = plan ?? (await prepareTailor(ctx, tx, sourceId, postId));
+  await ownResume(ctx, tx, sourceId, true);
   const meta = (await postMeta(tx, [postId])).get(postId);
   if (!meta) throw new AppError("NOT_FOUND");
   const [post] = await tx.select({ titleEn: circularPosts.titleEn, titleBn: circularPosts.titleBn }).from(circularPosts).where(eq(circularPosts.id, postId));
-
+  const aiCount = p.changes.filter((c) => c.status === "pending" && c.section !== "skills").length;
+  const aiSummaryBn = p.mode === "ai" ? t("resume.aiSummary", { n: aiCount }) : null;
   let [target] = await tx.select().from(resumes).where(and(eq(resumes.userId, userId), eq(resumes.circularPostId, postId)));
-  const base = target ? target.content : source.content;
-  const tailored = tailorContent(base, meta.required, meta.preferred);
   if (!target) {
     [target] = await tx
       .insert(resumes)
-      .values({
-        userId,
-        circularPostId: postId,
-        title: post.titleEn || post.titleBn,
-        content: tailored.content,
-        aiChanges: tailored.changes,
-        ...score(tailored.content, meta.required, meta.preferred),
-      })
+      .values({ userId, circularPostId: postId, title: post.titleEn || post.titleBn, content: p.content, aiChanges: p.changes, aiSummaryBn, ...score(p.content, meta.required, meta.preferred) })
       .returning();
   } else {
+    if (p.baseVersion != null && target.version !== p.baseVersion) throw new AppError("CONFLICT");
     const kept = target.aiChanges.filter((c) => c.status !== "pending");
-    target = await writeContent(ctx, tx, target, tailored.content, target.version, "টেইলর করার আগের লেখা", { aiChanges: [...kept, ...tailored.changes], aiSummaryBn: null });
+    target = await writeContent(ctx, tx, target, p.content, target.version, "টেইলর করার আগের লেখা", { aiChanges: [...kept, ...p.changes], aiSummaryBn });
   }
-  return { resume: await toResume(tx, target), mode: "fallback" };
+  return { resume: await toResume(tx, target), mode: p.mode };
 }
 
 function setPath(content: ResumeContent, path: string, value: string): ResumeContent {
