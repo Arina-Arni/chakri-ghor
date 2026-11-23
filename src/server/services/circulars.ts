@@ -349,7 +349,7 @@ export async function saveCircular(
 
 // ───────── transitions ─────────
 
-async function transitionInTx(
+export async function transitionInTx(
   ctx: Ctx,
   tx: Tx,
   id: string,
@@ -468,6 +468,11 @@ async function transitionInTx(
       link: `/jobs/${c.slug}`,
       dedupe: `cancel:${id}`,
     });
+  }
+  // A moderator decision resumes (or closes) an ingestion run waiting at its review gate.
+  if ((action === "approve" || action === "reject") && from === "pending_review") {
+    const { resumeAfterReview } = await import("./workflows");
+    await resumeAfterReview(tx, id, action === "approve" ? "approved" : "rejected", userId, now);
   }
   await writeAudit(tx, ctx, {
     action: `circular.${action}`,
