@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { Notice } from "@/components/feedback/notice";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,6 +40,8 @@ export function SignupForm() {
     onSuccess: (d) => router.push(`/check-email?email=${encodeURIComponent(d.email)}`),
     onError: (e) => {
       if (e.code === "RATE_LIMITED") setRateLimited(e.retryAfterSec ?? 60);
+      // Errors without field details (server or network) would otherwise show nothing at all.
+      else if (!e.fields) toast.error(e.message_bn, { description: e.requestId ? `রেফারেন্স: ${e.requestId}` : undefined });
       applyServerErrors(e.fields, form.setError as never);
     },
   });

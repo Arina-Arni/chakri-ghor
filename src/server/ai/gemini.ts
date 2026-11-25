@@ -25,6 +25,7 @@ export class GeminiProvider implements AiProvider {
           systemInstruction: req.system,
           responseMimeType: "application/json",
           ...(req.jsonSchema ? { responseJsonSchema: req.jsonSchema } : {}),
+          ...(req.thinking === false ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
           temperature: 0.1,
           abortSignal: req.signal,
         },

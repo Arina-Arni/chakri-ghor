@@ -9,6 +9,8 @@ export type GenerateRequest = {
   document?: { mimeType: string; dataBase64: string };
   /** JSON Schema for structured output. */
   jsonSchema?: Record<string, unknown>;
+  /** false = answer without "thinking" first: ~1 s instead of 6–14 s on newer Gemini models. */
+  thinking?: boolean;
   signal: AbortSignal;
 };
 

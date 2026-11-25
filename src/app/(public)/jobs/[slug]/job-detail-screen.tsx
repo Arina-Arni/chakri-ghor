@@ -288,7 +288,7 @@ export function JobDetailScreen({ slug }: { slug: string }) {
             <dl className="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2">
               <div><dt className="text-sm text-muted-foreground">{t("detail.salary")}</dt><dd className="font-medium">{salary}</dd></div>
               <div><dt className="text-sm text-muted-foreground">{t("detail.grade")}</dt><dd className="font-medium">{post.grade ? `${post.grade}তম` : t("common.notMentioned")}</dd></div>
-              <div><dt className="text-sm text-muted-foreground">{t("detail.fee")}</dt><dd className="font-medium">{c.applicationFee ? formatMoneyBn(c.applicationFee) : t("detail.noFee")}</dd></div>
+              <div><dt className="text-sm text-muted-foreground">{t("detail.fee")}</dt><dd className="font-medium">{c.applicationFee == null ? t("detail.feeSeeNotice") : c.applicationFee === 0 ? t("detail.noFee") : formatMoneyBn(c.applicationFee)}</dd></div>
               <div><dt className="text-sm text-muted-foreground">{t("admin.form.applyPlatform")}</dt><dd className="font-medium">{platform}</dd></div>
             </dl>
           </Section>

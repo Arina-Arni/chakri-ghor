@@ -513,6 +513,8 @@ export const bn = {
     grade: "গ্রেড",
     fee: "আবেদন ফি",
     noFee: "ফি নেই",
+    /** Fee not recorded: unknown is not the same as free. */
+    feeSeeNotice: "মূল বিজ্ঞপ্তি দেখুন",
     sectionDescription: "পদের বিবরণ",
     sectionEligibility: "যোগ্যতা",
     sectionHowToApply: "যেভাবে আবেদন করবেন",
@@ -616,7 +618,7 @@ export const bn = {
     loggedIn: "লগইন হয়েছে",
     loggedOut: "লগআউট হয়েছে",
     backToLogin: "লগইনে ফিরুন",
-    demoHint: "ডেমো: যেকোনো ইমেইল ও ৮+ অক্ষরের পাসওয়ার্ড দিন। ‘ratelimit@test.com’ দিলে রেট-লিমিট দেখাবে।",
+    demoHint: "অ্যাকাউন্ট না থাকলে আগে নিবন্ধন করুন (ইমেইলের লিংকে ক্লিক করে অ্যাকাউন্ট চালু করতে হবে)। ডেমো অ্যাকাউন্টের তথ্য বিচারকদের আলাদাভাবে দেওয়া হয়েছে।",
   },
   onboarding: {
     title: "প্রোফাইল তৈরি করুন",

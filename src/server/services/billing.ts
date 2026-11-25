@@ -72,16 +72,18 @@ async function saveState(tx: DbOrTx, userId: string, s: SubState, extra: Partial
 export async function getBilling(ctx: Ctx, db: DbOrTx): Promise<Billing> {
   const userId = requireUser(ctx.actor);
   const now = ctx.now();
-  const [ps, row] = await Promise.all([planRows(db), subRow(db, userId)]);
-  const s = advance(subStateOf(row), now);
-  const premium = s.status === "trialing" || s.status === "active" || s.status === "past_due" || s.status === "grace";
-  const plan = ps.find((p) => p.code === (premium ? "premium" : "free"))!;
-  const resetsAt = dayWindow(now).resetsAt.toISOString();
-  const [ai, cv, tailor] = await Promise.all([
+  // All five reads are independent: one round trip instead of two.
+  const [ps, row, ai, cv, tailor] = await Promise.all([
+    planRows(db),
+    subRow(db, userId),
     usedToday(db, userId, "ai_search", now),
     usedToday(db, userId, "cv_parse", now),
     usedToday(db, userId, "resume_tailor", now),
   ]);
+  const s = advance(subStateOf(row), now);
+  const premium = s.status === "trialing" || s.status === "active" || s.status === "past_due" || s.status === "grace";
+  const plan = ps.find((p) => p.code === (premium ? "premium" : "free"))!;
+  const resetsAt = dayWindow(now).resetsAt.toISOString();
   return {
     plans: ps.map(toPlan),
     subscription: {

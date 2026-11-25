@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Bookmark, CreditCard, FileText, LayoutDashboard, LogOut, Settings, Shield, User, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -15,12 +14,11 @@ import {
 import { useSession } from "@/components/providers/session-provider";
 import { signOut } from "@/data";
 import { t } from "@/i18n";
-import { notifySessionExpired } from "@/lib/events";
+import { leaveTo, notifySessionExpired } from "@/lib/events";
 
 /** Avatar menu. In development it also has a session-expiry trigger. */
 export function UserMenu() {
   const { me, role } = useSession();
-  const router = useRouter();
   if (!me) return null;
   const staff = role === "admin" || role === "moderator";
   return (
@@ -77,7 +75,8 @@ export function UserMenu() {
           onSelect={async () => {
             await signOut();
             toast.success(t("auth.loggedOut"));
-            router.push("/");
+            // Full page load, not router.push: see leaveTo().
+            leaveTo("/");
           }}
         >
           <LogOut className="size-4" aria-hidden />

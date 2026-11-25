@@ -38,10 +38,13 @@ export async function consume(key: string, rule: LimitRule, now = Date.now()): P
   return { ok: true };
 }
 
-/** Check every key (e.g. IP hash and email); throws RATE_LIMITED on the first that is full. */
+/**
+ * Check every key (e.g. IP hash and email); throws RATE_LIMITED when any is full. The upserts
+ * run in parallel: each one is a full round trip to the database, so doing them one after
+ * another made every login and sign-up visibly slower.
+ */
 export async function enforce(keys: string[], rule: LimitRule, now = Date.now()): Promise<void> {
-  for (const key of keys) {
-    const r = await consume(key, rule, now);
-    if (!r.ok) throw new AppError("RATE_LIMITED", { retryAfterSec: r.retryAfterSec });
-  }
+  const results = await Promise.all(keys.map((key) => consume(key, rule, now)));
+  const blocked = results.find((r): r is { ok: false; retryAfterSec: number } => !r.ok);
+  if (blocked) throw new AppError("RATE_LIMITED", { retryAfterSec: blocked.retryAfterSec });
 }

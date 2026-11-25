@@ -33,8 +33,12 @@ export async function getMe(ctx: Ctx, db: DbOrTx): Promise<Me | null> {
     await (await supabaseServer()).auth.signOut({ scope: "local" }).catch(() => {});
     return null;
   }
-  const profile = await loadProfile(db, ctx.actor.userId, ctx.actor.email);
-  const [billing, unread] = await Promise.all([getBilling(ctx, db), unreadCount(db, ctx.actor.userId)]);
+  // Independent reads: run them together (each sequential step is a full database round trip).
+  const [profile, billing, unread] = await Promise.all([
+    loadProfile(db, ctx.actor.userId, ctx.actor.email),
+    getBilling(ctx, db),
+    unreadCount(db, ctx.actor.userId),
+  ]);
   const name = profile.fullName || ctx.actor.email.split("@")[0];
   return {
     id: ctx.actor.userId,

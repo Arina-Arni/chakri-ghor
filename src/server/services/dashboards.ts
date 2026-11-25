@@ -22,48 +22,49 @@ const ts = (ms: number) => sql`${new Date(ms).toISOString()}::timestamptz`;
 export async function getSeekerDashboard(ctx: Ctx, db: DbOrTx): Promise<SeekerDashboard> {
   const userId = requireUser(ctx.actor);
   const now = ctx.now();
-  const profile = await loadProfile(db, userId, "");
-
-  const [byStatus, [counts], exams, watchedRows] = await Promise.all([
-    db
-      .select({ status: applications.status, n: sql<number>`count(*)::int` })
-      .from(applications)
-      .where(eq(applications.userId, userId))
-      .groupBy(applications.status),
-    db
-      .select({
-        saved: sql<number>`(select count(*)::int from ${bookmarks} b where b.user_id = ${userId})`,
-        applied: sql<number>`count(*) filter (where ${applications.status} not in ('saved','preparing','withdrawn'))::int`,
-        upcomingExams: sql<number>`count(*) filter (where ${applications.examAt} > ${ts(now)})::int`,
-      })
-      .from(applications)
-      .where(eq(applications.userId, userId)),
-    db
-      .select({ id: applications.id, examAt: applications.examAt, venue: applications.examVenue, title: circularPosts.titleBn })
-      .from(applications)
-      .innerJoin(circularPosts, eq(circularPosts.id, applications.circularPostId))
-      .where(and(eq(applications.userId, userId), isNotNull(applications.examAt), sql`${applications.examAt} > ${ts(now)}`))
-      .orderBy(asc(applications.examAt)),
-    // Circulars the user follows (bookmarked or tracked) that close within 7 days.
-    db
-      .selectDistinct({ id: circulars.id, endAt: circulars.applicationEndAt })
-      .from(circulars)
-      .innerJoin(circularPosts, eq(circularPosts.circularId, circulars.id))
-      .where(
-        and(
-          isPublicCircular,
-          sql`${circulars.applicationEndAt} > ${ts(now)} and ${circulars.applicationEndAt} <= ${ts(now + 7 * DAY)}`,
-          sql`(exists (select 1 from ${bookmarks} b where b.user_id = ${userId} and b.circular_post_id = ${circularPosts.id})
-            or exists (select 1 from ${applications} a where a.user_id = ${userId} and a.circular_post_id = ${circularPosts.id}))`,
-        ),
-      )
-      .orderBy(asc(circulars.applicationEndAt)),
+  // All reads below are independent, so they run together: each sequential step is a full
+  // round trip to the database, which made the dashboard (the first page after login) slow.
+  const [profile, [byStatus, [counts], exams, watchedRows], bmRows, open] = await Promise.all([
+    loadProfile(db, userId, ""),
+    Promise.all([
+      db
+        .select({ status: applications.status, n: sql<number>`count(*)::int` })
+        .from(applications)
+        .where(eq(applications.userId, userId))
+        .groupBy(applications.status),
+      db
+        .select({
+          saved: sql<number>`(select count(*)::int from ${bookmarks} b where b.user_id = ${userId})`,
+          applied: sql<number>`count(*) filter (where ${applications.status} not in ('saved','preparing','withdrawn'))::int`,
+          upcomingExams: sql<number>`count(*) filter (where ${applications.examAt} > ${ts(now)})::int`,
+        })
+        .from(applications)
+        .where(eq(applications.userId, userId)),
+      db
+        .select({ id: applications.id, examAt: applications.examAt, venue: applications.examVenue, title: circularPosts.titleBn })
+        .from(applications)
+        .innerJoin(circularPosts, eq(circularPosts.id, applications.circularPostId))
+        .where(and(eq(applications.userId, userId), isNotNull(applications.examAt), sql`${applications.examAt} > ${ts(now)}`))
+        .orderBy(asc(applications.examAt)),
+      // Circulars the user follows (bookmarked or tracked) that close within 7 days.
+      db
+        .selectDistinct({ id: circulars.id, endAt: circulars.applicationEndAt })
+        .from(circulars)
+        .innerJoin(circularPosts, eq(circularPosts.circularId, circulars.id))
+        .where(
+          and(
+            isPublicCircular,
+            sql`${circulars.applicationEndAt} > ${ts(now)} and ${circulars.applicationEndAt} <= ${ts(now + 7 * DAY)}`,
+            sql`(exists (select 1 from ${bookmarks} b where b.user_id = ${userId} and b.circular_post_id = ${circularPosts.id})
+              or exists (select 1 from ${applications} a where a.user_id = ${userId} and a.circular_post_id = ${circularPosts.id}))`,
+          ),
+        )
+        .orderBy(asc(circulars.applicationEndAt)),
+    ]),
+    db.select({ postId: bookmarks.circularPostId }).from(bookmarks).where(eq(bookmarks.userId, userId)),
+    loadCirculars(db, and(isPublicCircular, sql`${circulars.applicationEndAt} > ${ts(now)}`), now),
   ]);
-
-  const bmRows = await db.select({ postId: bookmarks.circularPostId }).from(bookmarks).where(eq(bookmarks.userId, userId));
   const bm = new Set(bmRows.map((r) => r.postId));
-
-  const open = await loadCirculars(db, and(isPublicCircular, sql`${circulars.applicationEndAt} > ${ts(now)}`), now);
   const watched = new Set(watchedRows.map((r) => r.id));
   const closingThisWeek = open.filter((c) => watched.has(c.id)).sort((a, b) => a.endAt.localeCompare(b.endAt)).map((c) => toListItem(c, bm));
 

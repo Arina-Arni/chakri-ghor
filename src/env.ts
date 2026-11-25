@@ -30,7 +30,7 @@ const serverSchema = publicSchema.extend({
  */
 const integrationSchema = z.object({
   GEMINI_API_KEY: z.string().min(10).optional(),
-  GEMINI_MODEL: z.string().min(3).default("gemini-2.5-flash"),
+  GEMINI_MODEL: z.string().min(3).default("gemini-3.5-flash"),
   RESEND_API_KEY: z.string().min(10).optional(),
   EMAIL_FROM: z.string().min(3).default("Chakri Radar <noreply@chakri-radar.app>"),
   FAULT_INJECTION_ALLOWED: z.string().optional().transform((v) => v === "true"),
