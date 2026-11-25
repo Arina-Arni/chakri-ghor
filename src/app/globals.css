@@ -224,203 +224,15 @@
 }
 
 /*
- * Login/signup scene (components/layout/auth-scene.tsx): a job seeker walks in with a briefcase,
- * puts it down, waves and points at the form, under a radar sweep. Each moving part is a <g>
- * placed by a `transform` attribute, so the CSS transform on the inner <g> turns around that
- * joint (SVG's default transform-origin is the local 0,0). Kept here, not in a CSS module: the
- * Turbopack CSS rule in next.config.ts compiles *.module.css as plain CSS.
- * Timeline: walk 0–1.8s · bow + put the case down 1.75–2.45s · wave, then point 2.35–4.15s.
+ * Login/signup pages (app/(auth)/layout.tsx): brand gradient behind the hero clip while it loads,
+ * and the form card slides in. Kept here, not in a CSS module: the Turbopack CSS rule in
+ * next.config.ts compiles *.module.css as plain CSS.
  */
 .auth-panel {
   background: linear-gradient(160deg, #0f766e 0%, #115e59 45%, #0b1f3a 100%);
 }
-.auth-walker {
-  animation: auth-walk-in 1.8s cubic-bezier(0.25, 0.6, 0.35, 1) both;
-}
-.auth-leg-front {
-  animation: auth-step-a 0.45s linear 4 both;
-}
-.auth-leg-back,
-.auth-arm-swing {
-  animation: auth-step-b 0.45s linear 4 both;
-}
-.auth-bob {
-  animation: auth-bob 0.45s ease-in-out 4 both;
-}
-.auth-bow {
-  animation: auth-bow 0.7s ease-in-out 1.75s both;
-}
-.auth-case-drop {
-  animation: auth-case-drop 0.4s cubic-bezier(0.5, 0, 0.9, 0.6) 1.95s both;
-}
-.auth-wave {
-  animation: auth-wave 1.8s ease-in-out 2.35s both;
-}
-.auth-bubble {
-  animation: auth-pop 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) 2.55s both;
-}
-.auth-breathe {
-  animation: auth-breathe 3.2s ease-in-out 4.2s infinite;
-}
-.auth-blink {
-  animation: auth-blink 4s ease-in-out 1s infinite;
-}
-.auth-sweep {
-  animation: auth-spin 6s linear infinite;
-}
-.auth-pulse {
-  animation: auth-pulse 3s ease-out infinite;
-}
-.auth-pulse-late {
-  animation: auth-pulse 3s ease-out 1.5s infinite;
-}
-.auth-ping {
-  animation: auth-ping 2.4s ease-out infinite;
-}
-/* The form slides in while the character walks; it never waits for the walk to finish. */
 .auth-form-in {
   animation: auth-form-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s both;
-}
-@keyframes auth-walk-in {
-  from {
-    transform: translateX(-260px);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-@keyframes auth-step-a {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(-24deg);
-  }
-  75% {
-    transform: rotate(24deg);
-  }
-}
-@keyframes auth-step-b {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(24deg);
-  }
-  75% {
-    transform: rotate(-24deg);
-  }
-}
-@keyframes auth-bob {
-  0%,
-  50%,
-  100% {
-    transform: translateY(0);
-  }
-  25%,
-  75% {
-    transform: translateY(-3px);
-  }
-}
-@keyframes auth-bow {
-  0% {
-    transform: rotate(0deg);
-  }
-  40%,
-  70% {
-    transform: rotate(14deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
-}
-@keyframes auth-case-drop {
-  from {
-    transform: translate(0, 0);
-  }
-  to {
-    transform: translate(-30px, 61px);
-  }
-}
-@keyframes auth-wave {
-  0% {
-    transform: rotate(0deg);
-  }
-  15% {
-    transform: rotate(-160deg);
-  }
-  30% {
-    transform: rotate(-132deg);
-  }
-  45% {
-    transform: rotate(-164deg);
-  }
-  60% {
-    transform: rotate(-132deg);
-  }
-  75% {
-    transform: rotate(-150deg);
-  }
-  100% {
-    transform: rotate(-72deg);
-  }
-}
-@keyframes auth-pop {
-  from {
-    transform: scale(0.3);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-@keyframes auth-breathe {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-1.5px);
-  }
-}
-@keyframes auth-blink {
-  0%,
-  92%,
-  100% {
-    transform: scaleY(1);
-  }
-  96% {
-    transform: scaleY(0.1);
-  }
-}
-@keyframes auth-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes auth-pulse {
-  from {
-    transform: scale(1);
-    opacity: 0.35;
-  }
-  to {
-    transform: scale(7);
-    opacity: 0;
-  }
-}
-@keyframes auth-ping {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  70%,
-  100% {
-    transform: scale(3.2);
-    opacity: 0;
-  }
 }
 @keyframes auth-form-in {
   from {
@@ -433,12 +245,7 @@
     transform: none;
   }
 }
-/*
- * Reduced motion (Windows "Animation effects" off, etc.): no scene animation at all. The resting
- * pose is a still picture: standing with the briefcase, "welcome" bubble shown, form visible.
- */
 @media (prefers-reduced-motion: reduce) {
-  .auth-panel *,
   .auth-form-in {
     animation: none !important;
   }
