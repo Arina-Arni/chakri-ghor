@@ -14,7 +14,8 @@ export type GenerateRequest = {
   signal: AbortSignal;
 };
 
-export type GenerateResponse = { text: string; inputTokens?: number; outputTokens?: number };
+/** `model`: the model that actually answered, when the provider falls back between models. */
+export type GenerateResponse = { text: string; inputTokens?: number; outputTokens?: number; model?: string };
 
 export interface AiProvider {
   readonly model: string;

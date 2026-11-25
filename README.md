@@ -107,6 +107,7 @@ npm run dev
 | `APP_URL` | public URL (email links, cron, sitemap) |
 | `IP_HASH_SALT` | salt for IP hashes; raw IPs are never stored |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | AI. Without a key every feature uses its fallback |
+| `GEMINI_FALLBACK_MODELS` | optional, comma-separated; tried when `GEMINI_MODEL` is out of quota (default `gemini-3.5-flash-lite`) |
 | `RESEND_API_KEY`, `EMAIL_FROM` | email. Without a key, emails stay queued |
 | `CRON_SECRET` | auth for `/api/cron/*` (constant-time compare) |
 | `FAULT_INJECTION_ALLOWED` | `true` lets admins inject AI faults into their own requests |

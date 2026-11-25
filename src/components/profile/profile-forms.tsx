@@ -322,7 +322,6 @@ export function CvExperienceForm({ formId, profile, onSubmit, draftKey, showCv =
           {aiFields.length > 0 && (
             <Notice tone="ai" live title={t("onboarding.cvSuccess")} action={<Button size="sm" variant="secondary" onClick={() => setAiFields([])}><CheckCheck aria-hidden />{t("onboarding.cvAllGood")}</Button>} />
           )}
-          <p className="text-sm text-muted-foreground">ডেমো: ফাইলের নামে “scan” থাকলে পড়া ব্যর্থ হবে, “locked” থাকলে পাসওয়ার্ড-সুরক্ষিত PDF দেখাবে।</p>
         </section>
       )}
 

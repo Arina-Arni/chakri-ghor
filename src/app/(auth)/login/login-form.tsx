@@ -33,6 +33,8 @@ export function LoginForm() {
 
   const done = (onboarded: boolean, role: string) => {
     toast.success(t("auth.loggedIn"));
+    // Next keeps this page alive (hidden) after navigating away; don't leave the password in it.
+    form.resetField("password");
     setNavigating(true);
     const target = safeNext(next, role === "admin" || role === "moderator" ? "/admin" : onboarded ? "/dashboard" : "/onboarding");
     // Wait until the client session knows the user, otherwise the protected page sees a
@@ -109,7 +111,7 @@ export function LoginForm() {
           {t("nav.signup")}
         </Link>
       </p>
-      <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">{t("auth.demoHint")}</p>
+      <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">{t("auth.signupHint")}</p>
     </div>
   );
 }

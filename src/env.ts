@@ -31,6 +31,11 @@ const serverSchema = publicSchema.extend({
 const integrationSchema = z.object({
   GEMINI_API_KEY: z.string().min(10).optional(),
   GEMINI_MODEL: z.string().min(3).default("gemini-3.5-flash"),
+  /** Comma-separated models tried, in order, when GEMINI_MODEL is out of quota (free-tier quotas are per model). */
+  GEMINI_FALLBACK_MODELS: z
+    .string()
+    .default("gemini-3.5-flash-lite")
+    .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean)),
   RESEND_API_KEY: z.string().min(10).optional(),
   EMAIL_FROM: z.string().min(3).default("Chakri Radar <noreply@chakri-radar.app>"),
   FAULT_INJECTION_ALLOWED: z.string().optional().transform((v) => v === "true"),
@@ -46,6 +51,7 @@ export function integrationEnv(): IntegrationEnv {
   return integrationSchema.parse({
     GEMINI_API_KEY: process.env.GEMINI_API_KEY || undefined,
     GEMINI_MODEL: process.env.GEMINI_MODEL || undefined,
+    GEMINI_FALLBACK_MODELS: process.env.GEMINI_FALLBACK_MODELS || undefined,
     RESEND_API_KEY: process.env.RESEND_API_KEY || undefined,
     EMAIL_FROM: process.env.EMAIL_FROM || undefined,
     FAULT_INJECTION_ALLOWED: process.env.FAULT_INJECTION_ALLOWED,
