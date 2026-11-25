@@ -3,8 +3,13 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
-/** The clip ends with the video tool's logo; playback stops just before it and holds that frame. */
-const END_AT = 4.98;
+/**
+ * At 5.2 s the clip cuts to the video tool's black end card. Playback stops a few frames earlier,
+ * at END_AT, and holds that frame.
+ */
+export const END_AT = 4.98;
+/** A frame at or past this time may already be the black end card, so jump back to END_AT. */
+export const OUTRO_AT = 5.15;
 
 /**
  * Fill the box; when a wide, short screen crops top and bottom, keep the lower part (the man's
@@ -36,16 +41,31 @@ export function AuthHeroVideo({ className }: { className?: string }) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return () => v.removeEventListener("volumechange", silence);
     }
-    const hold = () => {
-      if (v.currentTime >= END_AT) {
-        v.pause();
-        v.currentTime = END_AT;
-      }
+    // Stop on the frame itself. Checking only on `timeupdate` (about 4 times a second) let a frame
+    // or two of the black end card reach the screen before playback was pulled back: a blink.
+    let stopped = false;
+    let frameRequest = 0;
+    const stop = () => {
+      if (stopped) return;
+      stopped = true;
+      v.pause();
+      if (v.currentTime >= OUTRO_AT) v.currentTime = END_AT;
     };
-    v.addEventListener("timeupdate", hold);
+    const onFrame: VideoFrameRequestCallback = (_now, frame) => {
+      if (frame.mediaTime >= END_AT) stop();
+      else frameRequest = v.requestVideoFrameCallback(onFrame);
+    };
+    // Backup for browsers without frame callbacks, and for a background tab, where no frames are
+    // painted but `timeupdate` still fires.
+    const onTime = () => {
+      if (v.currentTime >= END_AT) stop();
+    };
+    v.addEventListener("timeupdate", onTime);
+    if ("requestVideoFrameCallback" in v) frameRequest = v.requestVideoFrameCallback(onFrame);
     v.play().catch(() => {}); // autoplay refused: the first frame stays, which is fine
     return () => {
-      v.removeEventListener("timeupdate", hold);
+      if (frameRequest) v.cancelVideoFrameCallback(frameRequest);
+      v.removeEventListener("timeupdate", onTime);
       v.removeEventListener("volumechange", silence);
     };
   }, []);
@@ -54,7 +74,7 @@ export function AuthHeroVideo({ className }: { className?: string }) {
     <div className={cn("relative aspect-video w-full overflow-hidden", className)} aria-hidden>
       <video
         ref={ref}
-        src={`/media/login-hero.mp4#t=0,${END_AT}`}
+        src="/media/login-hero.mp4"
         muted
         playsInline
         preload="metadata"
