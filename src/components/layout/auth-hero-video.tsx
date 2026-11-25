@@ -22,7 +22,20 @@ export function AuthHeroVideo({ className }: { className?: string }) {
 
   useEffect(() => {
     const v = ref.current;
-    if (!v || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!v) return;
+    // The clip file has an audio track. Keep it silent whatever happens: the `muted` attribute is
+    // not enough on every path (React sets it as a property, browser media controls can toggle it),
+    // so mute the property, zero the volume, and put both back if anything changes them.
+    const silence = () => {
+      if (!v.muted) v.muted = true;
+      if (v.volume !== 0) v.volume = 0;
+    };
+    v.defaultMuted = true;
+    silence();
+    v.addEventListener("volumechange", silence);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return () => v.removeEventListener("volumechange", silence);
+    }
     const hold = () => {
       if (v.currentTime >= END_AT) {
         v.pause();
@@ -31,7 +44,10 @@ export function AuthHeroVideo({ className }: { className?: string }) {
     };
     v.addEventListener("timeupdate", hold);
     v.play().catch(() => {}); // autoplay refused: the first frame stays, which is fine
-    return () => v.removeEventListener("timeupdate", hold);
+    return () => {
+      v.removeEventListener("timeupdate", hold);
+      v.removeEventListener("volumechange", silence);
+    };
   }, []);
 
   return (
