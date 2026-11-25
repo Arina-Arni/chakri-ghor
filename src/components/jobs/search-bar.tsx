@@ -75,7 +75,7 @@ export function SearchBar({
           e.preventDefault();
           onSubmit(text.trim(), mode);
         }}
-        className={cn("flex gap-2 rounded-xl p-1.5", hero ? "bg-white shadow-raised" : "border border-input bg-surface")}
+        className={cn("flex gap-2 rounded-xl p-1.5", hero ? "bg-white shadow-raised dark:bg-popover" : "border border-input bg-surface")}
       >
         <label htmlFor={id} className="sr-only">
           {t("search.label")}
@@ -96,7 +96,7 @@ export function SearchBar({
             className="h-12 w-full rounded-lg bg-transparent pr-2 pl-10 text-base text-ink outline-none placeholder:text-muted-foreground"
           />
         </div>
-        <Button type="submit" size="lg" loading={busy} className={cn(mode === "ai" && "bg-ai hover:bg-[#5b21b6]")}>
+        <Button type="submit" size="lg" loading={busy} className={cn(mode === "ai" && "bg-ai hover:bg-[#5b21b6] dark:hover:bg-[#c4b5fd]")}>
           <span className="hidden sm:inline">{t("search.submit")}</span>
           <Search className="sm:hidden" aria-hidden />
           <span className="sr-only sm:hidden">{t("search.submit")}</span>

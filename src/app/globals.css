@@ -9,17 +9,26 @@
  * Strong colors are reserved for deadlines and eligibility.
  */
 :root {
-  /* brand: mountain slate-blue on a pale sky, frosted white surfaces */
+  /* brand: mountain slate-blue on a pale sky, glass surfaces */
   --brand-primary: #3a5a7c;
   --brand-primary-hover: #2c4763;
   --brand-primary-soft: #e3ecf5;
   --ink: #14233a;
-  --muted-ink: #4b5d73;
+  --muted-ink: #44566c;
   --page: #e9f0f7;
-  --page-gradient: linear-gradient(180deg, #cfdeec 0%, #e1eaf4 30%, #eef3f8 100%);
-  /* Cards and fields: frosted glass, white at 85% over the sky background (text stays AA). */
-  --surface: rgb(255 255 255 / 0.85);
-  --line: #d3dfeb;
+  /* Pale sky with soft colour glows; the glass boxes let them show through. */
+  --page-gradient:
+    radial-gradient(40rem 30rem at 8% 0%, rgb(147 197 253 / 0.35), transparent 70%),
+    radial-gradient(36rem 28rem at 96% 12%, rgb(196 181 253 / 0.28), transparent 70%),
+    radial-gradient(42rem 32rem at 70% 100%, rgb(125 211 252 / 0.24), transparent 70%),
+    linear-gradient(180deg, #cfdeec 0%, #e1eaf4 35%, #eef3f8 100%);
+  /* Boxes and fields: glass, white at 60% (every text pair still AA on the brightest glow). */
+  --surface: rgb(255 255 255 / 0.6);
+  --glass-edge: rgb(255 255 255 / 0.75);
+  --glass-shine: rgb(255 255 255 / 0.55);
+  --line: rgb(130 156 188 / 0.38);
+  /* Text on solid status colours (danger badge, AI chip...): white in light, dark in dark. */
+  --on-solid: #ffffff;
   --hero-bg: #2b4560;
   --hero-gradient: linear-gradient(160deg, #4d6d8f 0%, #2b4560 55%, #1d3045 100%);
 
@@ -72,6 +81,75 @@
   --sidebar-ring: var(--brand-primary);
 }
 
+/*
+ * Dark mode: a night mountain sky. Light text, pale-blue buttons with dark text, glass boxes at
+ * 6% white. Every pair checked AA, including over the brightest background glow.
+ */
+.dark {
+  --brand-primary: #9cc3ea;
+  --brand-primary-hover: #b9d6f2;
+  --brand-primary-soft: rgb(156 195 234 / 0.16);
+  --ink: #e6edf5;
+  --muted-ink: #b0bfd0;
+  --page: #0f1b2e;
+  --page-gradient:
+    radial-gradient(40rem 30rem at 8% 0%, rgb(59 130 246 / 0.16), transparent 70%),
+    radial-gradient(36rem 28rem at 96% 12%, rgb(139 92 246 / 0.12), transparent 70%),
+    radial-gradient(42rem 32rem at 70% 100%, rgb(14 165 233 / 0.1), transparent 70%),
+    linear-gradient(180deg, #13233a 0%, #0f1b2e 45%, #0b1422 100%);
+  --surface: rgb(255 255 255 / 0.06);
+  --glass-edge: rgb(255 255 255 / 0.14);
+  --glass-shine: rgb(255 255 255 / 0.06);
+  --line: rgb(255 255 255 / 0.12);
+  --on-solid: #0b1626;
+  --hero-bg: #182a44;
+  --hero-gradient: linear-gradient(160deg, #2a4466 0%, #182a44 55%, #0e1a2d 100%);
+
+  --warning-fg: #fcd34d;
+  --warning-bg: rgb(251 191 36 / 0.14);
+  --danger-fg: #fecaca;
+  --danger-bg: rgb(248 113 113 / 0.15);
+  --success-fg: #86efac;
+  --success-bg: rgb(74 222 128 / 0.14);
+  --info-fg: #bfdbfe;
+  --info-bg: rgb(96 165 250 / 0.15);
+  --ai-fg: #ddd6fe;
+  --ai-bg: rgb(167 139 250 / 0.16);
+
+  --card: #16243a;
+  --popover: #16243a;
+  --primary-foreground: #0b1626;
+  --secondary: rgb(255 255 255 / 0.08);
+  --muted: rgb(255 255 255 / 0.07);
+  --input: #7f92aa;
+  --chart-1: #9cc3ea;
+  --chart-2: #93c5fd;
+  --chart-3: #fcd34d;
+  --chart-4: #c4b5fd;
+  --chart-5: #fca5a5;
+  --sidebar: #121f33;
+  --sidebar-primary-foreground: #0b1626;
+}
+
+/*
+ * The resume preview is a sheet of paper: always light, whatever the theme. Derived tokens
+ * (--foreground, --primary...) are resolved where they are declared, so they are set again here.
+ */
+.dark .paper {
+  --ink: #14233a;
+  --muted-ink: #44566c;
+  --foreground: #14233a;
+  --muted-foreground: #44566c;
+  --primary: #3a5a7c;
+  --primary-foreground: #ffffff;
+  --brand-primary-soft: #e3ecf5;
+  --line: rgb(130 156 188 / 0.38);
+  --border: rgb(130 156 188 / 0.38);
+  --surface: rgb(255 255 255 / 0.6);
+  --muted: #edf2f8;
+  color: #14233a;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -106,6 +184,7 @@
   --color-info-soft: var(--info-bg);
   --color-ai: var(--ai-fg);
   --color-ai-soft: var(--ai-bg);
+  --color-on-solid: var(--on-solid);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -209,6 +288,20 @@
   }
 }
 
+/*
+ * Glass boxes: every surface card gets a bright edge and a soft shine along its top, like frosted
+ * glass. In the components layer so a utility on the same element (border-primary on a selected
+ * card, etc.) still wins. No backdrop blur here: dozens of blurred cards make scrolling slow, and
+ * the background glows are already soft, so plain translucency reads as frosted.
+ */
+@layer components {
+  .bg-surface.shadow-card,
+  .bg-surface.shadow-raised {
+    border-color: var(--glass-edge);
+    background-image: linear-gradient(180deg, var(--glass-shine), transparent 3.5rem);
+  }
+}
+
 @layer utilities {
   .tabular-nums {
     font-variant-numeric: tabular-nums;
@@ -228,6 +321,10 @@
     background: linear-gradient(90deg, #e4ecf4 25%, #f3f7fb 37%, #e4ecf4 63%);
     background-size: 400% 100%;
     animation: var(--animate-shimmer);
+  }
+  .dark .skeleton-shimmer {
+    background: linear-gradient(90deg, rgb(255 255 255 / 0.06) 25%, rgb(255 255 255 / 0.12) 37%, rgb(255 255 255 / 0.06) 63%);
+    background-size: 400% 100%;
   }
   .scrollbar-thin {
     scrollbar-width: thin;

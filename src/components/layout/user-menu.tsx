@@ -37,10 +37,10 @@ export function UserMenu() {
           aria-label={`${t("nav.account")}: ${me.fullName} (${roleLabel})`}
           className="relative grid size-11 place-items-center rounded-full"
         >
-          <span className="grid size-9 place-items-center rounded-full bg-primary text-sm font-bold text-white">{me.initials}</span>
+          <span className="grid size-9 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{me.initials}</span>
           {staff && (
             <span
-              className={`absolute right-0 bottom-0 grid size-4.5 place-items-center rounded-full text-white ring-2 ring-white ${role === "admin" ? "bg-ai" : "bg-info"}`}
+              className={`absolute right-0 bottom-0 grid size-4.5 place-items-center rounded-full text-on-solid ring-2 ring-background ${role === "admin" ? "bg-ai" : "bg-info"}`}
               aria-hidden
             >
               <Shield className="size-2.5" strokeWidth={3} />

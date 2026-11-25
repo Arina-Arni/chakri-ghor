@@ -22,12 +22,14 @@ import { cn } from "@/lib/utils";
 /**
  * Chart palette (validated with the dataviz validator, light surface):
  * categorical slots 1–3 pass all-pairs CVD and normal-vision checks.
- * Single-series charts use the brand teal only.
+ * Single-series charts use one mid blue that reads on both the light and the dark theme (≥3:1).
  */
 export const SERIES = ["#2a78d6", "#eb6834", "#1baf7a"] as const;
-export const SINGLE = "#3a5a7c";
-const AXIS = "#4b5d73";
-const GRID = "#dbe5ef";
+/** Mid blue: ≥3:1 against both the light glass and the dark glass backgrounds. */
+export const SINGLE = "#5b84ad";
+/** Axis text, grid and cursor follow the theme through the wrapper's text colour (text-muted-foreground). */
+const AXIS = "currentColor";
+const PLOT = "text-muted-foreground";
 
 const tickStyle = { fill: AXIS, fontSize: 13 };
 const fmt = (v: unknown) => (typeof v === "number" ? formatNumberBn(v) : String(v));
@@ -68,7 +70,7 @@ function DataTable({ caption, data, xKey, series }: { caption: string; data: Dat
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { name?: string; value?: number; color?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border bg-surface px-3 py-2 text-sm shadow-raised">
+    <div className="rounded-lg border bg-popover px-3 py-2 text-sm shadow-raised">
       {label && <p className="mb-1 font-semibold text-ink">{label}</p>}
       {payload.map((p, i) => (
         <p key={i} className="flex items-center gap-2 text-ink">
@@ -95,13 +97,13 @@ export function BarListChart({ title, data }: { title: string; data: { labelBn: 
   const rows = data.map((d) => ({ label: d.labelBn, value: d.count }));
   return (
     <ChartCard title={title}>
-      <div aria-hidden style={{ height: Math.max(160, rows.length * 36) }}>
+      <div aria-hidden className={PLOT} style={{ height: Math.max(160, rows.length * 36) }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart accessibilityLayer={false} data={rows} layout="vertical" margin={{ left: 8, right: 24, top: 0, bottom: 0 }} barCategoryGap={6}>
-            <CartesianGrid horizontal={false} stroke={GRID} />
+            <CartesianGrid horizontal={false} stroke="currentColor" strokeOpacity={0.2} />
             <XAxis type="number" tick={tickStyle} tickFormatter={fmt} axisLine={false} tickLine={false} allowDecimals={false} />
             <YAxis type="category" dataKey="label" tick={tickStyle} width={130} axisLine={false} tickLine={false} />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: "#edf2f8" }} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: "currentColor", fillOpacity: 0.08 }} />
             <Bar dataKey="value" name={title} fill={SINGLE} radius={[0, 4, 4, 0]} maxBarSize={22} />
           </BarChart>
         </ResponsiveContainer>
@@ -125,14 +127,14 @@ export function StackedBarChart({
 }) {
   return (
     <ChartCard title={title}>
-      <div aria-hidden className="h-60">
+      <div aria-hidden className={cn("h-60", PLOT)}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart accessibilityLayer={false} data={data} margin={{ left: -16, right: 8, top: 8 }}>
-            <CartesianGrid vertical={false} stroke={GRID} />
+            <CartesianGrid vertical={false} stroke="currentColor" strokeOpacity={0.2} />
             <XAxis dataKey={xKey} tick={tickStyle} axisLine={false} tickLine={false} />
             <YAxis tick={tickStyle} tickFormatter={fmt} axisLine={false} tickLine={false} allowDecimals={false} />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: "#edf2f8" }} />
-            <Legend wrapperStyle={{ fontSize: 13 }} iconType="square" formatter={(v) => <span style={{ color: "#0f172a" }}>{v}</span>} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: "currentColor", fillOpacity: 0.08 }} />
+            <Legend wrapperStyle={{ fontSize: 13 }} iconType="square" formatter={(v) => <span className="text-ink">{v}</span>} />
             {series.map((s, i) => (
               <Bar
                 key={s.key}
@@ -140,8 +142,7 @@ export function StackedBarChart({
                 name={s.label}
                 stackId="a"
                 fill={SERIES[i]}
-                stroke="#ffffff"
-                strokeWidth={1}
+                stroke="none"
                 radius={i === series.length - 1 ? [4, 4, 0, 0] : 0}
                 maxBarSize={36}
               />
@@ -158,14 +159,14 @@ export function StackedBarChart({
 export function LineTrendChart({ title, data, xKey, yKey, yLabel }: { title: string; data: Datum[]; xKey: string; yKey: string; yLabel: string }) {
   return (
     <ChartCard title={title}>
-      <div aria-hidden className="h-60">
+      <div aria-hidden className={cn("h-60", PLOT)}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart accessibilityLayer={false} data={data} margin={{ left: -16, right: 12, top: 8 }}>
-            <CartesianGrid vertical={false} stroke={GRID} />
+            <CartesianGrid vertical={false} stroke="currentColor" strokeOpacity={0.2} />
             <XAxis dataKey={xKey} tick={tickStyle} axisLine={false} tickLine={false} />
             <YAxis tick={tickStyle} tickFormatter={fmt} axisLine={false} tickLine={false} allowDecimals={false} />
             <Tooltip content={<ChartTooltip />} cursor={{ stroke: AXIS, strokeDasharray: "3 3" }} />
-            <Line type="monotone" dataKey={yKey} name={yLabel} stroke={SINGLE} strokeWidth={2} dot={{ r: 4, fill: SINGLE, stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 6 }} />
+            <Line type="monotone" dataKey={yKey} name={yLabel} stroke={SINGLE} strokeWidth={2} dot={{ r: 4, fill: SINGLE, strokeWidth: 0 }} activeDot={{ r: 6 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

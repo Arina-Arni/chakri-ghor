@@ -12,6 +12,7 @@ import { t } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { NotificationBell } from "./notification-bell";
+import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
 
 const PUBLIC_LINKS = [
@@ -83,6 +84,7 @@ function AppHeaderInner() {
         </nav>
         <div className="ml-auto flex items-center gap-1 md:gap-2">
           {signedIn && <HeaderSearch />}
+          <ThemeToggle />
           {status === "loading" ? (
             <span className="h-11 w-24" aria-hidden />
           ) : signedIn ? (

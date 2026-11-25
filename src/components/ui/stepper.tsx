@@ -30,7 +30,7 @@ export function Stepper({
               <span
                 className={cn(
                   "grid size-9 shrink-0 place-items-center rounded-full border-2 font-semibold tabular-nums",
-                  done && "border-primary bg-primary text-white",
+                  done && "border-primary bg-primary text-primary-foreground",
                   active && "border-primary bg-primary-soft text-primary-hover",
                   !done && !active && "border-input bg-surface text-muted-foreground",
                 )}

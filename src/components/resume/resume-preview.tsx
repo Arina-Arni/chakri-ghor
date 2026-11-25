@@ -41,7 +41,7 @@ export function ResumePreview({ content: c, update }: { content: ResumeContent; 
       <article
         lang="en"
         aria-label={t("resume.previewLabel")}
-        className="mx-auto aspect-[1/1.414] w-full max-w-[720px] min-w-[300px] bg-white p-5 font-latin text-[13px] leading-relaxed text-slate-800 shadow-raised sm:p-10"
+        className="mx-auto aspect-[1/1.414] paper w-full max-w-[720px] min-w-[300px] bg-white p-5 font-latin text-[13px] leading-relaxed text-slate-800 shadow-raised sm:p-10"
       >
         <header className="text-center">
           <InlineText as="p" value={c.contact.fullName} label="Full name" className="text-2xl font-bold text-slate-900" onSave={(v) => update((x) => ({ ...x, contact: { ...x.contact, fullName: v } }))} />

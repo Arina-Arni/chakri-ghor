@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { AuthHeroVideo } from "@/components/layout/auth-hero-video";
 import { Logo } from "@/components/layout/logo";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { t } from "@/i18n";
 
-/** White pill behind header/footer items while they sit on the full-screen clip (large screens). */
-const ON_VIDEO = "lg:rounded-full lg:bg-white/90 lg:px-4 lg:py-1.5 lg:shadow-sm";
+/** Glass pill behind header/footer items while they sit on the full-screen clip (large screens). */
+const PILL = "lg:rounded-full lg:bg-white/80 lg:shadow-sm lg:backdrop-blur dark:lg:bg-[#0b1626]/70";
+const ON_VIDEO = `${PILL} lg:px-4 lg:py-1.5`;
 
 /**
  * Auth pages. Large screens: the hero clip fills the whole screen and the form card sits at the
@@ -18,13 +20,18 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
         <span className={ON_VIDEO}>
           <Logo />
         </span>
-        <Link href="/jobs" className={`inline-flex min-h-11 items-center font-medium text-primary hover:underline lg:min-h-0 ${ON_VIDEO}`}>
-          {t("nav.jobs")}
-        </Link>
+        <div className="flex items-center gap-2">
+          <ThemeToggle className={PILL} />
+          <Link href="/jobs" className={`inline-flex min-h-11 items-center font-medium text-primary hover:underline lg:min-h-0 ${ON_VIDEO}`}>
+            {t("nav.jobs")}
+          </Link>
+        </div>
       </header>
 
-      <div className="auth-panel mx-4 overflow-hidden rounded-2xl lg:fixed lg:inset-0 lg:m-0 lg:rounded-none">
+      <div className="auth-panel relative mx-4 overflow-hidden rounded-2xl lg:fixed lg:inset-0 lg:m-0 lg:rounded-none">
         <AuthHeroVideo className="lg:aspect-auto lg:h-full" />
+        {/* Dark mode: dim the daylight clip so it sits with the night palette. */}
+        <div className="pointer-events-none absolute inset-0 hidden bg-black/45 dark:block" aria-hidden />
       </div>
 
       <main
@@ -34,9 +41,10 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
       >
         {/*
           Compact on large screens so the login card fits a laptop screen without scrolling.
-          Solid card, no backdrop blur: blurring a playing video is heavy and some GPUs drop the layer.
+          Over the clip it is frosted glass (one blurred element only). White 72% / night 60%: text
+          stays AA even when a dark window or the door of the clip is behind it.
         */}
-        <div className="auth-form-in auth-card w-full max-w-md rounded-2xl border bg-white p-6 shadow-raised sm:p-7 lg:max-w-[25rem] lg:p-6 lg:shadow-2xl">
+        <div className="auth-form-in auth-card w-full max-w-md rounded-2xl border bg-surface p-6 shadow-raised sm:p-7 lg:max-w-[25rem] lg:border-white/60 lg:bg-white/72 lg:p-6 lg:shadow-2xl lg:backdrop-blur-xl lg:backdrop-saturate-150 dark:lg:border-white/15 dark:lg:bg-[#0b1626]/60">
           {children}
         </div>
       </main>

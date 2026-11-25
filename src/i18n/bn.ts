@@ -8,6 +8,10 @@ export const bn = {
     tagline: "সব চাকরির খবর, এক রাডারে",
     logoAlt: "চাকরি রাডার — হোম",
   },
+  theme: {
+    toDark: "ডার্ক মোড চালু করুন",
+    toLight: "লাইট মোড চালু করুন",
+  },
   common: {
     loading: "লোড হচ্ছে…",
     retry: "আবার চেষ্টা করুন",

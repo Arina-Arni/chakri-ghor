@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import type { FaultInjection, Role } from "@/types";
 import { Logo, RadarMark } from "./logo";
 import { NotificationBell } from "./notification-bell";
+import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
 
 type Item = { href: string; label: () => string; Icon: typeof LayoutDashboard; roles: Role[] };
@@ -164,7 +165,7 @@ function AdminShellInner({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-surface px-4">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-surface px-4 backdrop-blur">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("common.openMenu")}>
@@ -183,6 +184,7 @@ function AdminShellInner({ children }: { children: React.ReactNode }) {
           </Sheet>
           <span className="font-semibold text-ink lg:hidden">{t("adminNav.title")}</span>
           <div className="ml-auto flex items-center gap-1">
+            <ThemeToggle />
             <NotificationBell />
             <UserMenu />
           </div>
