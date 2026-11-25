@@ -36,7 +36,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
           Compact on large screens so the login card fits a laptop screen without scrolling.
           Solid card, no backdrop blur: blurring a playing video is heavy and some GPUs drop the layer.
         */}
-        <div className="auth-form-in auth-card w-full max-w-md rounded-2xl border bg-surface p-6 shadow-raised sm:p-7 lg:max-w-[25rem] lg:p-6 lg:shadow-2xl">
+        <div className="auth-form-in auth-card w-full max-w-md rounded-2xl border bg-white p-6 shadow-raised sm:p-7 lg:max-w-[25rem] lg:p-6 lg:shadow-2xl">
           {children}
         </div>
       </main>

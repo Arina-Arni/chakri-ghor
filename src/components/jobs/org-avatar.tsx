@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 const PALETTE = [
-  "bg-[#e6f4f1] text-[#115e59]",
+  "bg-[#e3ecf5] text-[#2c4763]",
   "bg-[#dbeafe] text-[#1e40af]",
   "bg-[#fef3c7] text-[#92400e]",
   "bg-[#ede9fe] text-[#5b21b6]",

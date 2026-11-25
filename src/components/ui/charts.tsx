@@ -25,9 +25,9 @@ import { cn } from "@/lib/utils";
  * Single-series charts use the brand teal only.
  */
 export const SERIES = ["#2a78d6", "#eb6834", "#1baf7a"] as const;
-export const SINGLE = "#0f766e";
-const AXIS = "#475569";
-const GRID = "#e2e8f0";
+export const SINGLE = "#3a5a7c";
+const AXIS = "#4b5d73";
+const GRID = "#dbe5ef";
 
 const tickStyle = { fill: AXIS, fontSize: 13 };
 const fmt = (v: unknown) => (typeof v === "number" ? formatNumberBn(v) : String(v));
@@ -101,7 +101,7 @@ export function BarListChart({ title, data }: { title: string; data: { labelBn: 
             <CartesianGrid horizontal={false} stroke={GRID} />
             <XAxis type="number" tick={tickStyle} tickFormatter={fmt} axisLine={false} tickLine={false} allowDecimals={false} />
             <YAxis type="category" dataKey="label" tick={tickStyle} width={130} axisLine={false} tickLine={false} />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: "#f1f5f9" }} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: "#edf2f8" }} />
             <Bar dataKey="value" name={title} fill={SINGLE} radius={[0, 4, 4, 0]} maxBarSize={22} />
           </BarChart>
         </ResponsiveContainer>
@@ -131,7 +131,7 @@ export function StackedBarChart({
             <CartesianGrid vertical={false} stroke={GRID} />
             <XAxis dataKey={xKey} tick={tickStyle} axisLine={false} tickLine={false} />
             <YAxis tick={tickStyle} tickFormatter={fmt} axisLine={false} tickLine={false} allowDecimals={false} />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: "#f1f5f9" }} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: "#edf2f8" }} />
             <Legend wrapperStyle={{ fontSize: 13 }} iconType="square" formatter={(v) => <span style={{ color: "#0f172a" }}>{v}</span>} />
             {series.map((s, i) => (
               <Bar

@@ -9,16 +9,19 @@
  * Strong colors are reserved for deadlines and eligibility.
  */
 :root {
-  /* brand */
-  --brand-primary: #0f766e;
-  --brand-primary-hover: #115e59;
-  --brand-primary-soft: #e6f4f1;
-  --ink: #0f172a;
-  --muted-ink: #475569;
-  --page: #f8fafc;
-  --surface: #ffffff;
-  --line: #e2e8f0;
-  --hero-bg: #0b1f3a;
+  /* brand: mountain slate-blue on a pale sky, frosted white surfaces */
+  --brand-primary: #3a5a7c;
+  --brand-primary-hover: #2c4763;
+  --brand-primary-soft: #e3ecf5;
+  --ink: #14233a;
+  --muted-ink: #4b5d73;
+  --page: #e9f0f7;
+  --page-gradient: linear-gradient(180deg, #cfdeec 0%, #e1eaf4 30%, #eef3f8 100%);
+  /* Cards and fields: frosted glass, white at 85% over the sky background (text stays AA). */
+  --surface: rgb(255 255 255 / 0.85);
+  --line: #d3dfeb;
+  --hero-bg: #2b4560;
+  --hero-gradient: linear-gradient(160deg, #4d6d8f 0%, #2b4560 55%, #1d3045 100%);
 
   /* status (text / soft background) */
   --warning-fg: #b45309;
@@ -35,24 +38,25 @@
   /* shadcn theme wired to the tokens */
   --background: var(--page);
   --foreground: var(--ink);
-  --card: var(--surface);
+  --card: #ffffff;
   --card-foreground: var(--ink);
-  --popover: var(--surface);
+  /* Dialogs, menus and sheets stay solid white over whatever is behind them. */
+  --popover: #ffffff;
   --popover-foreground: var(--ink);
   --primary: var(--brand-primary);
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
+  --secondary: #e8eff6;
   --secondary-foreground: var(--ink);
-  --muted: #f1f5f9;
+  --muted: #edf2f8;
   --muted-foreground: var(--muted-ink);
   --accent: var(--brand-primary-soft);
   --accent-foreground: var(--brand-primary-hover);
   --destructive: var(--danger-fg);
   --border: var(--line);
   /* Input borders need 3:1 against white (WCAG 1.4.11), so they are darker than --line. */
-  --input: #7d8ba0;
+  --input: #6f8299;
   --ring: var(--brand-primary);
-  --chart-1: #0f766e;
+  --chart-1: #3a5a7c;
   --chart-2: #1d4ed8;
   --chart-3: #b45309;
   --chart-4: #6d28d9;
@@ -140,8 +144,8 @@
   --radius-3xl: 20px;
   --radius-4xl: 9999px;
 
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
-  --shadow-raised: 0 4px 12px rgb(15 23 42 / 0.08), 0 1px 3px rgb(15 23 42 / 0.06);
+  --shadow-card: 0 1px 2px rgb(30 58 95 / 0.06), 0 2px 8px rgb(30 58 95 / 0.07);
+  --shadow-raised: 0 6px 18px rgb(30 58 95 / 0.12), 0 1px 3px rgb(30 58 95 / 0.08);
 
   --breakpoint-xs: 22.5rem;
 
@@ -167,8 +171,15 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Pale sky that fades lighter down the page; cards float on it as frosted glass. */
+    background-image: var(--page-gradient);
+    background-attachment: fixed;
     font-size: 1rem;
     line-height: 1.6;
+  }
+  /* Home hero: sky-to-mountain gradient (white text stays ≥ 5.3:1 everywhere on it). */
+  .hero-surface {
+    background-image: var(--hero-gradient);
   }
   h1,
   h2,
@@ -214,7 +225,7 @@
     }
   }
   .skeleton-shimmer {
-    background: linear-gradient(90deg, #eef2f6 25%, #f8fafc 37%, #eef2f6 63%);
+    background: linear-gradient(90deg, #e4ecf4 25%, #f3f7fb 37%, #e4ecf4 63%);
     background-size: 400% 100%;
     animation: var(--animate-shimmer);
   }
@@ -229,7 +240,7 @@
  * next.config.ts compiles *.module.css as plain CSS.
  */
 .auth-panel {
-  background: linear-gradient(160deg, #0f766e 0%, #115e59 45%, #0b1f3a 100%);
+  background: var(--hero-gradient);
 }
 .auth-form-in {
   animation: auth-form-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s both;
