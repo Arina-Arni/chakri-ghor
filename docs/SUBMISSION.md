@@ -8,13 +8,13 @@
 | **GitHub** | https://github.com/Arina-Arni/chakri-ghor |
 | **Live URL** | _add the Vercel production URL after deployment_ |
 | **YouTube demo** | _add after recording (`docs/DEMO_SCRIPT.md`)_ |
-| **Test accounts** | Provided privately to the judges (seeker, moderator, admin) |
+| **Test accounts** | Provided privately to the judges (a seeker and an admin) |
 
 ## Problem statement
 
 Bangladesh's job circulars, especially government ones, are published separately on hundreds of ministry, directorate, district-office and bank websites. Job seekers, most of them on mobile and many outside Dhaka, find out late. They also struggle to tell whether they are eligible: age is counted on a specific date with quota relaxations, and posts have district and education rules. Many have no ATS-friendly English CV.
 
-Chakri Radar collects circulars in one Bangla-first place. AI reads each circular through an automated, resumable ingestion workflow that a moderator checks before publishing. The app checks each seeker's eligibility exactly, tailors an ATS resume to the post, and tracks applications with deadline and exam reminders, so nobody misses a deadline.
+Chakri Radar collects government circulars and jobs from employers' official career pages in one Bangla-first place. The live site uses real circulars only. AI reads each circular through an automated, resumable ingestion workflow that a moderator checks before publishing. The app checks each seeker's eligibility exactly, tailors an ATS resume to the post, and tracks applications with deadline and exam reminders, so nobody misses a deadline.
 
 ## Users
 
