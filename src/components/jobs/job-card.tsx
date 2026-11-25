@@ -124,7 +124,8 @@ export function JobCard({
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="inline-flex items-center gap-1">
             <MapPin className="size-4" aria-hidden />
-            {job.districtNameBn ?? "সারা দেশ"}
+            {/* No single district: "anywhere in Bangladesh" or several places (details on the job page). */}
+            {job.districtNameBn ?? t("jobCard.variousPlaces")}
           </span>
           <span className={cn(salary === t("jobCard.salaryNA") ? "italic" : "font-medium text-ink")}>{salary}</span>
         </p>

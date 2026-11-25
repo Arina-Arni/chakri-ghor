@@ -34,6 +34,7 @@ import {
   setFaultInjectionAction,
   workflowActionAction,
 } from "@/server/actions/admin";
+import type { TeletalkPrivateList } from "@/domain/teletalk-private";
 import { fail, mutate, newKey, query } from "./_runtime";
 
 
@@ -181,6 +182,11 @@ export async function ingest(input: IngestInput, idempotencyKey: string): Promis
   } catch {
     return fail("NETWORK");
   }
+}
+
+/** Teletalk's public private-jobs list (staff only); `available: false` when Teletalk can't be reached. */
+export async function listTeletalkPrivateJobs(): Promise<Result<TeletalkPrivateList>> {
+  return query("listTeletalkPrivateJobs");
 }
 
 export async function listWorkflowRuns(filter: { status?: string } = {}): Promise<Result<WorkflowRun[]>> {
