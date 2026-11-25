@@ -54,6 +54,9 @@ export function HeroSearch() {
   );
 }
 
+/** Solid card colour (white / night navy) with a lifted shadow, for tiles that overlap the hero. */
+const SOLID_TILE = "bg-card shadow-raised";
+
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   briefcase: Briefcase,
   landmark: Landmark,
@@ -88,14 +91,16 @@ export function LandingLive() {
   const d = q.data;
   return (
     <>
+      {/* These tiles overlap the hero's bottom edge, so they are solid: a see-through glass tile
+          would show the dark hero through its top half and look cut in two. */}
       <section className="container-page -mt-8 md:-mt-10" aria-label="সংক্ষিপ্ত পরিসংখ্যান">
         {!d ? (
-          <StatTilesSkeleton count={3} />
+          <StatTilesSkeleton count={3} className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3" tileClassName={SOLID_TILE} />
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <StatTile value={d.openCirculars} label={t("landing.statOpen")} icon={FileStack} />
-            <StatTile value={d.totalVacancies} label={t("landing.statVacancies")} icon={Users} />
-            <StatTile value={d.closingToday} label={t("landing.statClosingToday")} icon={AlarmClock} tone={d.closingToday ? "danger" : "default"} />
+            <StatTile className={SOLID_TILE} value={d.openCirculars} label={t("landing.statOpen")} icon={FileStack} />
+            <StatTile className={SOLID_TILE} value={d.totalVacancies} label={t("landing.statVacancies")} icon={Users} />
+            <StatTile className={SOLID_TILE} value={d.closingToday} label={t("landing.statClosingToday")} icon={AlarmClock} tone={d.closingToday ? "danger" : "default"} />
           </div>
         )}
       </section>
