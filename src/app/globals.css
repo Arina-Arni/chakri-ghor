@@ -250,6 +250,20 @@
     animation: none !important;
   }
 }
+/*
+ * Short laptop screens (e.g. 1366×768 minus browser bars and taskbar ≈ 640px tall): shrink the
+ * whole auth card so the full form, signup included, fits without scrolling.
+ */
+@media (min-width: 64rem) and (max-height: 720px) {
+  .auth-card {
+    zoom: 0.9;
+  }
+}
+@media (min-width: 64rem) and (max-height: 620px) {
+  .auth-card {
+    zoom: 0.82;
+  }
+}
 
 /* All motion off for people who ask for it (spec §2.4, §8). */
 @media (prefers-reduced-motion: reduce) {

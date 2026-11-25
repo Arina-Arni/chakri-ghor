@@ -14,7 +14,7 @@ const ON_VIDEO = "lg:rounded-full lg:bg-white/90 lg:px-4 lg:py-1.5 lg:shadow-sm"
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="relative flex min-h-dvh flex-col bg-background">
-      <header className="container-page relative z-10 flex h-16 items-center justify-between">
+      <header className="container-page relative z-10 flex h-16 items-center justify-between lg:h-14">
         <span className={ON_VIDEO}>
           <Logo />
         </span>
@@ -30,15 +30,19 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
       <main
         id="main"
         tabIndex={-1}
-        className="relative z-10 flex flex-1 items-start justify-center px-4 py-6 outline-none sm:items-center lg:justify-end lg:px-10 xl:px-16"
+        className="relative z-10 flex flex-1 items-start justify-center px-4 py-6 outline-none sm:items-center lg:justify-end lg:px-10 lg:py-3 xl:px-16"
       >
-        {/* Solid card, no backdrop blur: blurring a playing video is heavy and some GPUs drop the layer. */}
-        <div className="auth-form-in w-full max-w-md rounded-2xl border bg-surface p-6 shadow-raised sm:p-8 lg:shadow-2xl">
+        {/*
+          Compact on large screens so the login card fits a laptop screen without scrolling.
+          Solid card, no backdrop blur: blurring a playing video is heavy and some GPUs drop the layer.
+        */}
+        <div className="auth-form-in auth-card w-full max-w-md rounded-2xl border bg-surface p-6 shadow-raised sm:p-7 lg:max-w-[25rem] lg:p-6 lg:shadow-2xl">
           {children}
         </div>
       </main>
 
-      <footer className="relative z-10 py-6 text-center text-sm text-muted-foreground">
+      {/* Large screens: floats over the clip's bottom edge, so it takes no height from the card. */}
+      <footer className="relative z-10 py-6 text-center text-sm text-muted-foreground lg:absolute lg:inset-x-0 lg:bottom-0 lg:py-3">
         <span className={ON_VIDEO}>
           <Link href="/privacy" className="underline-offset-4 hover:underline">
             {t("footer.privacy")}
