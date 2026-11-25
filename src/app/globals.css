@@ -9,16 +9,28 @@
  * Strong colors are reserved for deadlines and eligibility.
  */
 :root {
-  /* brand */
-  --brand-primary: #0f766e;
-  --brand-primary-hover: #115e59;
-  --brand-primary-soft: #e6f4f1;
-  --ink: #0f172a;
-  --muted-ink: #475569;
-  --page: #f8fafc;
-  --surface: #ffffff;
-  --line: #e2e8f0;
-  --hero-bg: #0b1f3a;
+  /* brand: mountain slate-blue on a pale sky, glass surfaces */
+  --brand-primary: #3a5a7c;
+  --brand-primary-hover: #2c4763;
+  --brand-primary-soft: #e3ecf5;
+  --ink: #14233a;
+  --muted-ink: #44566c;
+  --page: #e9f0f7;
+  /* Pale sky with soft colour glows; the glass boxes let them show through. */
+  --page-gradient:
+    radial-gradient(40rem 30rem at 8% 0%, rgb(147 197 253 / 0.35), transparent 70%),
+    radial-gradient(36rem 28rem at 96% 12%, rgb(196 181 253 / 0.28), transparent 70%),
+    radial-gradient(42rem 32rem at 70% 100%, rgb(125 211 252 / 0.24), transparent 70%),
+    linear-gradient(180deg, #cfdeec 0%, #e1eaf4 35%, #eef3f8 100%);
+  /* Boxes and fields: glass, white at 60% (every text pair still AA on the brightest glow). */
+  --surface: rgb(255 255 255 / 0.6);
+  --glass-edge: rgb(255 255 255 / 0.75);
+  --glass-shine: rgb(255 255 255 / 0.55);
+  --line: rgb(130 156 188 / 0.38);
+  /* Text on solid status colours (danger badge, AI chip...): white in light, dark in dark. */
+  --on-solid: #ffffff;
+  --hero-bg: #2b4560;
+  --hero-gradient: linear-gradient(160deg, #4d6d8f 0%, #2b4560 55%, #1d3045 100%);
 
   /* status (text / soft background) */
   --warning-fg: #b45309;
@@ -35,24 +47,25 @@
   /* shadcn theme wired to the tokens */
   --background: var(--page);
   --foreground: var(--ink);
-  --card: var(--surface);
+  --card: #ffffff;
   --card-foreground: var(--ink);
-  --popover: var(--surface);
+  /* Dialogs, menus and sheets stay solid white over whatever is behind them. */
+  --popover: #ffffff;
   --popover-foreground: var(--ink);
   --primary: var(--brand-primary);
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
+  --secondary: #e8eff6;
   --secondary-foreground: var(--ink);
-  --muted: #f1f5f9;
+  --muted: #edf2f8;
   --muted-foreground: var(--muted-ink);
   --accent: var(--brand-primary-soft);
   --accent-foreground: var(--brand-primary-hover);
   --destructive: var(--danger-fg);
   --border: var(--line);
   /* Input borders need 3:1 against white (WCAG 1.4.11), so they are darker than --line. */
-  --input: #7d8ba0;
+  --input: #6f8299;
   --ring: var(--brand-primary);
-  --chart-1: #0f766e;
+  --chart-1: #3a5a7c;
   --chart-2: #1d4ed8;
   --chart-3: #b45309;
   --chart-4: #6d28d9;
@@ -66,6 +79,75 @@
   --sidebar-accent-foreground: var(--brand-primary-hover);
   --sidebar-border: var(--line);
   --sidebar-ring: var(--brand-primary);
+}
+
+/*
+ * Dark mode: a night mountain sky. Light text, pale-blue buttons with dark text, glass boxes at
+ * 6% white. Every pair checked AA, including over the brightest background glow.
+ */
+.dark {
+  --brand-primary: #9cc3ea;
+  --brand-primary-hover: #b9d6f2;
+  --brand-primary-soft: rgb(156 195 234 / 0.16);
+  --ink: #e6edf5;
+  --muted-ink: #b0bfd0;
+  --page: #0f1b2e;
+  --page-gradient:
+    radial-gradient(40rem 30rem at 8% 0%, rgb(59 130 246 / 0.16), transparent 70%),
+    radial-gradient(36rem 28rem at 96% 12%, rgb(139 92 246 / 0.12), transparent 70%),
+    radial-gradient(42rem 32rem at 70% 100%, rgb(14 165 233 / 0.1), transparent 70%),
+    linear-gradient(180deg, #13233a 0%, #0f1b2e 45%, #0b1422 100%);
+  --surface: rgb(255 255 255 / 0.06);
+  --glass-edge: rgb(255 255 255 / 0.14);
+  --glass-shine: rgb(255 255 255 / 0.06);
+  --line: rgb(255 255 255 / 0.12);
+  --on-solid: #0b1626;
+  --hero-bg: #182a44;
+  --hero-gradient: linear-gradient(160deg, #2a4466 0%, #182a44 55%, #0e1a2d 100%);
+
+  --warning-fg: #fcd34d;
+  --warning-bg: rgb(251 191 36 / 0.14);
+  --danger-fg: #fecaca;
+  --danger-bg: rgb(248 113 113 / 0.15);
+  --success-fg: #86efac;
+  --success-bg: rgb(74 222 128 / 0.14);
+  --info-fg: #bfdbfe;
+  --info-bg: rgb(96 165 250 / 0.15);
+  --ai-fg: #ddd6fe;
+  --ai-bg: rgb(167 139 250 / 0.16);
+
+  --card: #16243a;
+  --popover: #16243a;
+  --primary-foreground: #0b1626;
+  --secondary: rgb(255 255 255 / 0.08);
+  --muted: rgb(255 255 255 / 0.07);
+  --input: #7f92aa;
+  --chart-1: #9cc3ea;
+  --chart-2: #93c5fd;
+  --chart-3: #fcd34d;
+  --chart-4: #c4b5fd;
+  --chart-5: #fca5a5;
+  --sidebar: #121f33;
+  --sidebar-primary-foreground: #0b1626;
+}
+
+/*
+ * The resume preview is a sheet of paper: always light, whatever the theme. Derived tokens
+ * (--foreground, --primary...) are resolved where they are declared, so they are set again here.
+ */
+.dark .paper {
+  --ink: #14233a;
+  --muted-ink: #44566c;
+  --foreground: #14233a;
+  --muted-foreground: #44566c;
+  --primary: #3a5a7c;
+  --primary-foreground: #ffffff;
+  --brand-primary-soft: #e3ecf5;
+  --line: rgb(130 156 188 / 0.38);
+  --border: rgb(130 156 188 / 0.38);
+  --surface: rgb(255 255 255 / 0.6);
+  --muted: #edf2f8;
+  color: #14233a;
 }
 
 @theme inline {
@@ -102,6 +184,7 @@
   --color-info-soft: var(--info-bg);
   --color-ai: var(--ai-fg);
   --color-ai-soft: var(--ai-bg);
+  --color-on-solid: var(--on-solid);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -140,8 +223,8 @@
   --radius-3xl: 20px;
   --radius-4xl: 9999px;
 
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
-  --shadow-raised: 0 4px 12px rgb(15 23 42 / 0.08), 0 1px 3px rgb(15 23 42 / 0.06);
+  --shadow-card: 0 1px 2px rgb(30 58 95 / 0.06), 0 2px 8px rgb(30 58 95 / 0.07);
+  --shadow-raised: 0 6px 18px rgb(30 58 95 / 0.12), 0 1px 3px rgb(30 58 95 / 0.08);
 
   --breakpoint-xs: 22.5rem;
 
@@ -167,8 +250,15 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Pale sky that fades lighter down the page; cards float on it as frosted glass. */
+    background-image: var(--page-gradient);
+    background-attachment: fixed;
     font-size: 1rem;
     line-height: 1.6;
+  }
+  /* Home hero: sky-to-mountain gradient (white text stays ≥ 5.3:1 everywhere on it). */
+  .hero-surface {
+    background-image: var(--hero-gradient);
   }
   h1,
   h2,
@@ -198,6 +288,20 @@
   }
 }
 
+/*
+ * Glass boxes: every surface card gets a bright edge and a soft shine along its top, like frosted
+ * glass. In the components layer so a utility on the same element (border-primary on a selected
+ * card, etc.) still wins. No backdrop blur here: dozens of blurred cards make scrolling slow, and
+ * the background glows are already soft, so plain translucency reads as frosted.
+ */
+@layer components {
+  .bg-surface.shadow-card,
+  .bg-surface.shadow-raised {
+    border-color: var(--glass-edge);
+    background-image: linear-gradient(180deg, var(--glass-shine), transparent 3.5rem);
+  }
+}
+
 @layer utilities {
   .tabular-nums {
     font-variant-numeric: tabular-nums;
@@ -214,12 +318,58 @@
     }
   }
   .skeleton-shimmer {
-    background: linear-gradient(90deg, #eef2f6 25%, #f8fafc 37%, #eef2f6 63%);
+    background: linear-gradient(90deg, #e4ecf4 25%, #f3f7fb 37%, #e4ecf4 63%);
     background-size: 400% 100%;
     animation: var(--animate-shimmer);
   }
+  .dark .skeleton-shimmer {
+    background: linear-gradient(90deg, rgb(255 255 255 / 0.06) 25%, rgb(255 255 255 / 0.12) 37%, rgb(255 255 255 / 0.06) 63%);
+    background-size: 400% 100%;
+  }
   .scrollbar-thin {
     scrollbar-width: thin;
+  }
+}
+
+/*
+ * Login/signup pages (app/(auth)/layout.tsx): brand gradient behind the hero clip while it loads,
+ * and the form card slides in. Kept here, not in a CSS module: the Turbopack CSS rule in
+ * next.config.ts compiles *.module.css as plain CSS.
+ */
+.auth-panel {
+  background: var(--hero-gradient);
+}
+.auth-form-in {
+  animation: auth-form-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s both;
+}
+@keyframes auth-form-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  /* `none`, not translateY(0): a kept transform would trap fixed-position children. */
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-form-in {
+    animation: none !important;
+  }
+}
+/*
+ * Short laptop screens (e.g. 1366×768 minus browser bars and taskbar ≈ 640px tall): shrink the
+ * whole auth card so the full form, signup included, fits without scrolling.
+ */
+@media (min-width: 64rem) and (max-height: 720px) {
+  .auth-card {
+    zoom: 0.9;
+  }
+}
+@media (min-width: 64rem) and (max-height: 620px) {
+  .auth-card {
+    zoom: 0.82;
   }
 }
 

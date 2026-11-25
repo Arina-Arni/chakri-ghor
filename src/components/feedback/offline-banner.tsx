@@ -40,13 +40,13 @@ export function OfflineBanner() {
   return (
     <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 top-0 z-[60] flex justify-center">
       {!online && (
-        <p className="pointer-events-auto mt-2 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-medium text-white shadow-raised">
+        <p className="pointer-events-auto mt-2 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-medium text-background shadow-raised">
           <WifiOff className="size-4" aria-hidden />
           {t("states.offline")}
         </p>
       )}
       {online && showBack && (
-        <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-success px-4 py-2 text-sm font-medium text-white shadow-raised">
+        <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-success px-4 py-2 text-sm font-medium text-on-solid shadow-raised">
           <Wifi className="size-4" aria-hidden />
           {t("states.backOnline")}
         </p>

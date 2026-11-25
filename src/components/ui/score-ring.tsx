@@ -18,7 +18,7 @@ export function ScoreRing({
   className?: string;
 }) {
   const level = atsLabel(score);
-  const color = level === "excellent" ? "#15803d" : level === "good" ? "#0f766e" : "#b45309";
+  const color = level === "excellent" ? "#15803d" : level === "good" ? "#3a5a7c" : "#b45309";
   const stroke = Math.max(6, size / 12);
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
@@ -32,7 +32,7 @@ export function ScoreRing({
         style={{ width: size, height: size }}
       >
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e2e8f0" strokeWidth={stroke} />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#d3dfeb" strokeWidth={stroke} />
           <circle
             cx={size / 2}
             cy={size / 2}

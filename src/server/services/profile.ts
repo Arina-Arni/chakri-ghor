@@ -23,14 +23,15 @@ const DEFAULT_PREFS: Profile["preferences"] = { categoryIds: [], districtIds: []
 
 /** Assemble the full Profile (profile row + educations + experiences + skills + preferences). */
 export async function loadProfile(db: DbOrTx, userId: string, email: string): Promise<Profile> {
-  const [row] = await db.select().from(profiles).where(eq(profiles.userId, userId));
-  if (!row) throw new AppError("NOT_FOUND");
-  const [eds, exps, skills, [pref]] = await Promise.all([
+  // The profile row and its parts are independent reads: one round trip instead of two.
+  const [[row], eds, exps, skills, [pref]] = await Promise.all([
+    db.select().from(profiles).where(eq(profiles.userId, userId)),
     db.select().from(educations).where(eq(educations.userId, userId)).orderBy(asc(educations.position), asc(educations.createdAt)),
     db.select().from(experiences).where(eq(experiences.userId, userId)).orderBy(asc(experiences.position), asc(experiences.createdAt)),
     db.select().from(userSkills).where(eq(userSkills.userId, userId)).orderBy(asc(userSkills.position)),
     db.select().from(preferences).where(eq(preferences.userId, userId)),
   ]);
+  if (!row) throw new AppError("NOT_FOUND");
   const base = {
     userId,
     fullName: row.fullName,

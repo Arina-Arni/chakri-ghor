@@ -88,7 +88,10 @@ export async function aiParseSearch(ctx: Ctx, text: string): Promise<{ parsed: P
     prompt: { system: SEARCH_SYSTEM, user: fence("QUERY", text) },
     schema: searchSchema,
     jsonSchema: searchJsonSchema,
-    budgetMs: 4 * SEC,
+    // Thinking off: Gemini answers in ~1 s instead of 6–14 s. The rest of the budget covers the
+    // database round trips around the call (~4 s with the database in Sydney).
+    thinking: false,
+    budgetMs: 10 * SEC,
     retries: 1,
     cacheTtlMs: 24 * 3600 * SEC,
     semantic: (v) => {
@@ -355,6 +358,7 @@ export async function aiTag(ctx: Ctx, text: string): Promise<{ categoryId: strin
       user: fence("CIRCULAR", text.slice(0, 4000)),
     },
     schema: tagSchema,
+    thinking: false,
     budgetMs: 15 * SEC,
     retries: 2,
     cacheTtlMs: 7 * 24 * 3600 * SEC,

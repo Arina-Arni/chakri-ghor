@@ -33,7 +33,7 @@ export function NotificationBell() {
         <Button variant="ghost" size="icon" className="relative" aria-label={unread ? t("notifications.bellLabel", { n: unread }) : t("notifications.bellLabelNone")}>
           <Bell aria-hidden />
           {unread > 0 && (
-            <span className="absolute top-1.5 right-1.5 grid min-w-5 place-items-center rounded-full bg-danger px-1 text-[11px] leading-5 font-bold text-white tabular-nums" aria-hidden>
+            <span className="absolute top-1.5 right-1.5 grid min-w-5 place-items-center rounded-full bg-danger px-1 text-[11px] leading-5 font-bold text-on-solid tabular-nums" aria-hidden>
               {toBnDigits(unread > 9 ? "9+" : unread)}
             </span>
           )}

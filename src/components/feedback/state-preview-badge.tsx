@@ -13,7 +13,7 @@ export function StatePreviewBadge() {
   );
   if (process.env.NODE_ENV === "production" || !state) return null;
   return (
-    <div className="pointer-events-none fixed right-3 bottom-20 z-[60] rounded-full bg-ai px-3 py-1 text-xs font-semibold text-white shadow-raised lg:bottom-3">
+    <div className="pointer-events-none fixed right-3 bottom-20 z-[60] rounded-full bg-ai px-3 py-1 text-xs font-semibold text-on-solid shadow-raised lg:bottom-3">
       {t("states.statePreview", { state })}
     </div>
   );

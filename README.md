@@ -21,6 +21,8 @@ Chakri Radar is a Bangla-first web app for:
 - **Tracker and reminders:** application state machine, deadline reminders (72 h / 24 h / 3 h) and exam reminders, in-app notifications plus email (Resend outbox).
 - **Admin:** circular CRUD with review, the **ingestion workflow** (PDF, URL or text → AI extraction → review → publish → notify), AI health, fault injection, users and roles, audit log, feature flags and plans.
 - **Plans:** Free and Premium quotas, a 7-day trial, mock payments with signed, idempotent webhooks.
+- **Real data:** government circulars from Teletalk, and private and NGO jobs taken only from the employers' own career pages (BRAC, BRACNet, BRAC International). The live site has no sample data. Admins can also check Teletalk's private-jobs list from `/admin/ingest`.
+- **Interface:** Bangla-first, light and dark themes (WCAG AA contrast), a role badge in the account menu, and a muted login animation that respects reduced motion.
 
 Screens: [docs/UI.md](docs/UI.md) (mobile and desktop screenshots).
 
@@ -91,11 +93,13 @@ Next.js 16 (App Router, TypeScript strict) · Tailwind CSS 4 + shadcn/ui · Supa
 ```bash
 npm install
 npm run db:migrate   # drizzle/*.sql over DIRECT_URL
-npm run db:seed      # idempotent sample data, plans, demo workflow runs, one demo user per role
+npm run db:seed      # optional, development database only (see below)
 npm run dev
 ```
 
-`db:seed` writes the demo logins to the git-ignored `.seed-credentials.local.md`. **Test accounts are provided privately to the judges.**
+`db:seed` adds sample circulars, demo workflow runs and one demo user per role, and writes the demo logins to the git-ignored `.seed-credentials.local.md`. Run it only on a database you use for development. **Never run it against the production database:** the live site shows real circulars only. To try the app without Supabase, `npm run db:local` starts a throwaway seeded Postgres instead.
+
+**Test accounts are provided privately to the judges.**
 
 ### Environment variables
 
@@ -107,12 +111,13 @@ npm run dev
 | `APP_URL` | public URL (email links, cron, sitemap) |
 | `IP_HASH_SALT` | salt for IP hashes; raw IPs are never stored |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | AI. Without a key every feature uses its fallback |
+| `GEMINI_FALLBACK_MODELS` | optional, comma-separated; tried when `GEMINI_MODEL` is out of quota (default `gemini-3.5-flash-lite`) |
 | `RESEND_API_KEY`, `EMAIL_FROM` | email. Without a key, emails stay queued |
 | `CRON_SECRET` | auth for `/api/cron/*` (constant-time compare) |
-| `FAULT_INJECTION_ALLOWED` | `true` lets admins inject AI faults into their own requests |
+| `FAULT_INJECTION_ALLOWED` | `true` lets admins inject AI faults into their own requests. Set it on the judged deployment for the A06 demo |
 | `PAYMENT_PROVIDER`, `PAYMENT_WEBHOOK_SECRET` | `mock`; HMAC secret for webhooks |
 | `INGEST_ALLOWED_HOSTS` | optional extra hosts for PDF-URL ingest |
-| `NEXT_PUBLIC_SAMPLE_DATA_NOTICE` | `1` shows the "sample data" footer notice |
+| `NEXT_PUBLIC_SAMPLE_DATA_NOTICE` | `1` shows the "sample data" footer notice. Leave it unset in production |
 
 ## Scripts
 
@@ -130,10 +135,26 @@ npm run e2e               # Playwright; needs E2E_BASE_URL + E2E_* credentials o
 ## Deployment
 
 1. Link the GitHub repo to a Vercel project; `main` auto-deploys to production.
-2. Set the env vars in Vercel.
-3. Against the production database, run `npm run db:migrate` and `npm run db:seed`.
-4. Run `npm run db:cron` once, with the production `APP_URL` and `CRON_SECRET`. It schedules `worker` (every minute) and `scheduler` (every 15 minutes) in pg_cron.
-5. Check `/api/health` for the DB, breakers, outbox backlog and workflow backlog.
+2. In Vercel, add the env vars from `.env.local`, with two changes:
+   - `APP_URL` is the production URL, not `localhost`.
+   - Add `FAULT_INJECTION_ALLOWED=true` for the A06 demo.
+
+   `DIRECT_URL` is only for migrations, so it is not needed in Vercel.
+3. In Supabase, open **Authentication → URL Configuration**. Set **Site URL** to the production URL and add `<production URL>/**` to **Redirect URLs**. Otherwise confirmation and Google sign-in links point to `localhost`.
+4. Against the production database, run `npm run db:migrate`. Do **not** run `db:seed` there; it adds sample data and demo accounts.
+5. Run `npm run db:cron` once with the production URL. It schedules `worker` (every minute) and `scheduler` (every 15 minutes) in pg_cron. Without it, the following don't run on their own:
+   - deadline and exam reminders
+   - auto-closing of expired circulars
+   - delayed workflow retries
+   - the email outbox
+
+   A new ingest still runs at once, and admins can press **Run now**. A variable already set in the shell wins over `.env.local`:
+
+   ```bash
+   APP_URL=https://<your-app>.vercel.app npm run db:cron            # bash
+   $env:APP_URL="https://<your-app>.vercel.app"; npm run db:cron     # PowerShell
+   ```
+6. Check `/api/health` for the DB, breakers, outbox backlog and workflow backlog.
 
 ## Testing
 
@@ -147,8 +168,12 @@ npm run e2e               # Playwright; needs E2E_BASE_URL + E2E_* credentials o
 ## Limitations and future work
 
 - No automatic scraping of government sites: circulars are uploaded, linked or pasted.
+- Private jobs come from a few employers' official career pages. Paid job boards such as Bdjobs are not copied, because their listings are employers' paid ads. Teletalk's private-jobs list was empty when checked (26 Nov 2026); admins can re-check it from `/admin/ingest`.
+- Users apply on the official site. The app links there and tracks the application, but it does not submit applications itself.
+- Gemini's free tier allows about 20 requests per model per day. When the quota runs out, every AI feature uses its fallback, such as the rule-based search parser.
+- Without an email provider (`RESEND_API_KEY`), notifications are in-app only. Supabase's built-in auth emails are rate-limited.
 - Payments use a mock provider behind the `PaymentProvider` interface; bKash, SSLCommerz and carrier billing come at launch.
 - Scanned PDFs need Gemini vision; there is no local OCR.
-- Next: employer portal, PWA with push notifications, Sentry, an English toggle, dark mode, staging and backups.
+- Next: employer portal, PWA with push notifications, Sentry, an English toggle, staging and backups.
 
 Docs: [PLAN](docs/PLAN.md) · [DECISIONS](docs/DECISIONS.md) · [UI](docs/UI.md) · [CHALLENGES](docs/CHALLENGES.md) · [RUBRIC_MAP](docs/RUBRIC_MAP.md) · [TEST_SCENARIOS](docs/TEST_SCENARIOS.md) · [DEMO_SCRIPT](docs/DEMO_SCRIPT.md) · [SUBMISSION](docs/SUBMISSION.md)

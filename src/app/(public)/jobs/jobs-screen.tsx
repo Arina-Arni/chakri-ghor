@@ -222,6 +222,9 @@ export function JobsScreen() {
   if (filters.eligibleOnly) activeChips.push({ key: "eligibleOnly", value: null, label: t("jobs.eligibleOnly") });
 
   const aiResult = ai.status === "done" && viaAi ? ai.result : null;
+  // While AI reads the sentence, don't run it as a plain keyword search: that shows "0 jobs" for a
+  // few seconds before the real filters arrive.
+  const aiPending = aiRequested && !!filters.q && !(ai.status !== "idle" && ai.status !== "parsing" && ai.text === filters.q);
   const count = activeFilterCount(filters);
 
   return (
@@ -282,7 +285,7 @@ export function JobsScreen() {
         </aside>
 
         <section aria-labelledby="results-h">
-          <h2 id="results-h" className="sr-only">{t("jobs.resultCount", { n: facets.data?.total ?? 0 })}</h2>
+          <h2 id="results-h" className="sr-only">{aiPending ? t("search.aiParsing") : t("jobs.resultCount", { n: facets.data?.total ?? 0 })}</h2>
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <Button variant="secondary" className="lg:hidden" onClick={() => setSheetOpen(true)}>
               <SlidersHorizontal aria-hidden />
@@ -313,7 +316,7 @@ export function JobsScreen() {
             )}
           </div>
 
-          {(activeChips.length > 0 || (filters.q && !aiResult)) && (
+          {!aiPending && (activeChips.length > 0 || (filters.q && !aiResult)) && (
             <div className="mb-4 flex flex-wrap items-center gap-2" aria-label={t("jobs.activeFilters")}>
               {filters.q && !aiResult && <Chip onRemove={() => go({ ...filters, q: undefined })}>“{filters.q}”</Chip>}
               {!aiResult &&
@@ -331,7 +334,7 @@ export function JobsScreen() {
             </div>
           )}
 
-          <Results key={key} filters={filters} onApply={(f) => go(f)} />
+          {aiPending ? <JobListSkeleton count={4} /> : <Results key={key} filters={filters} onApply={(f) => go(f)} />}
         </section>
       </div>
 

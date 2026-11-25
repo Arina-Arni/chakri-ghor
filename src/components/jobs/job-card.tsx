@@ -48,7 +48,9 @@ export function JobCard({
     >
       <div className="flex items-center gap-3">
         <OrgAvatar shortName={job.organization.shortName} seed={job.organization.slug} size={compact ? "sm" : "md"} />
-        <p className={cn("min-w-0 flex-1 truncate text-sm", closed ? "text-muted-foreground" : "text-ink")}>
+        {/* relative: keeps the absolutely positioned sr-only "verified" text inside the clipped
+            line; otherwise a long organization name pushes it past the screen edge on phones. */}
+        <p className={cn("relative min-w-0 flex-1 truncate text-sm", closed ? "text-muted-foreground" : "text-ink")}>
           {job.organization.nameBn}
           {job.organization.verified && (
             <span className="ml-1 inline-flex items-center align-middle text-primary">
@@ -122,7 +124,8 @@ export function JobCard({
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="inline-flex items-center gap-1">
             <MapPin className="size-4" aria-hidden />
-            {job.districtNameBn ?? "সারা দেশ"}
+            {/* No single district: "anywhere in Bangladesh" or several places (details on the job page). */}
+            {job.districtNameBn ?? t("jobCard.variousPlaces")}
           </span>
           <span className={cn(salary === t("jobCard.salaryNA") ? "italic" : "font-medium text-ink")}>{salary}</span>
         </p>

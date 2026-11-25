@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { Notice } from "@/components/feedback/notice";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,6 +40,8 @@ export function SignupForm() {
     onSuccess: (d) => router.push(`/check-email?email=${encodeURIComponent(d.email)}`),
     onError: (e) => {
       if (e.code === "RATE_LIMITED") setRateLimited(e.retryAfterSec ?? 60);
+      // Errors without field details (server or network) would otherwise show nothing at all.
+      else if (!e.fields) toast.error(e.message_bn, { description: e.requestId ? `রেফারেন্স: ${e.requestId}` : undefined });
       applyServerErrors(e.fields, form.setError as never);
     },
   });
@@ -46,9 +49,9 @@ export function SignupForm() {
   const google = useMutation(() => signInWithGoogle("/onboarding"));
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <div>
-        <h1 className="text-2xl font-bold">{t("auth.signupTitle")}</h1>
+        <h1 className="text-2xl font-bold lg:text-xl">{t("auth.signupTitle")}</h1>
         <p className="text-muted-foreground">{t("auth.signupSub")}</p>
       </div>
       {rateLimited != null && (
@@ -59,7 +62,7 @@ export function SignupForm() {
       <ErrorSummary errors={isSubmitted ? flattenErrors(errors, (p) => LABELS[p] ?? p) : []} />
       <form
         noValidate
-        className="space-y-4"
+        className="space-y-3"
         onSubmit={form.handleSubmit(
           (v) => {
             setRateLimited(null);
@@ -74,7 +77,7 @@ export function SignupForm() {
         <Field id="email" label={t("auth.email")} required error={errors.email?.message}>
           <Input type="email" autoComplete="email" inputMode="email" {...form.register("email")} />
         </Field>
-        <Field id="password" label={t("auth.password")} required error={errors.password?.message} hint={t("validation.passwordWeak")}>
+        <Field id="password" label={t("auth.password")} required error={errors.password?.message} hint={<span className="text-xs">{t("validation.passwordWeak")}</span>}>
           <PasswordInput autoComplete="new-password" {...form.register("password")} />
         </Field>
         <div aria-live="polite">
@@ -99,7 +102,7 @@ export function SignupForm() {
                   aria-describedby={errors.terms ? "terms-error" : undefined}
                   className="mt-1"
                 />
-                <label htmlFor="terms" className="leading-snug">
+                <label htmlFor="terms" className="text-sm leading-snug">
                   {t("auth.terms")} <span className="text-sm text-muted-foreground">{t("common.requiredMark")}</span>{" "}
                   (<Link href="/terms" className="text-primary underline" target="_blank">{t("footer.terms")}</Link>)
                 </label>
@@ -112,11 +115,11 @@ export function SignupForm() {
             </div>
           )}
         />
-        <Button type="submit" size="lg" className="w-full" loading={signup.pending}>
+        <Button type="submit" className="w-full" loading={signup.pending}>
           {t("auth.signupButton")}
         </Button>
       </form>
-      <Button variant="secondary" size="lg" className="w-full" loading={google.pending} onClick={() => void google.run()}>
+      <Button variant="secondary" className="w-full" loading={google.pending} onClick={() => void google.run()}>
         <GoogleIcon />
         {t("auth.google")}
       </Button>

@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -34,6 +35,9 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   serverExternalPackages: ["@react-pdf/renderer", "unpdf", "mammoth", "postgres"],
+  // The dev terminal would otherwise print every Server Action's arguments — including the
+  // password typed into the login form.
+  logging: { serverFunctions: false },
   experimental: {
     // CV upload goes through a Route Handler; Server Actions stay small.
     serverActions: { bodySizeLimit: "1mb" },
@@ -42,6 +46,9 @@ const nextConfig: NextConfig = {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
   turbopack: {
+    // Pin the root to this folder. Otherwise Next guesses it from lockfiles in parent folders
+    // and may watch a whole drive or the home directory, which makes dev very slow.
+    root: path.resolve(__dirname),
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],

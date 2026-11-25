@@ -1,6 +1,8 @@
 # Manual test scenarios for judges
 
-These scripts run on the live site. Test accounts (seeker, moderator, admin) are shared privately; they are never in the repository. The site runs with `FAULT_INJECTION_ALLOWED=true`, and fault injection affects only the admin who enables it.
+These scripts run on the live site. Test accounts (a seeker and an admin) are shared privately; they are never in the repository. The site runs with `FAULT_INJECTION_ALLOWED=true`, and fault injection affects only the admin who enables it.
+
+The live site shows real circulars only. The PDFs in `samples/` are fictional: every ingested circular waits at review (auto-publish is off), so **reject** sample circulars there and they never go live.
 
 Each scenario lists the steps and then what you should see.
 
@@ -9,13 +11,13 @@ Each scenario lists the steps and then what you should see.
 ### 1. Search, including AI mode
 
 1. Open `/jobs` as a guest.
-2. Type `খুলনায় সরকারি অফিস সহকারী` with AI mode on.
+2. Type `ঢাকায় সরকারি অফিসের চাকরি` with AI mode on.
 
-**Expected:** filter chips (খুলনা, সরকারি…) and matching circulars. Removing a chip updates the list and the facet counts.
+**Expected:** filter chips (ঢাকা, সরকারি…) and matching circulars. Removing a chip updates the list and the facet counts.
 
 ### 2. Eligibility
 
-1. Log in as the **seeker** and open a circular with an age limit, for example *জেলা প্রশাসকের কার্যালয়, খুলনা*.
+1. Log in as the **seeker** and open a government circular with an age limit, for example *ডাক অধিদপ্তর*.
 2. Press **যোগ্যতা যাচাই**.
 
 **Expected:** a verdict, plus one row each for age (the exact age on the reference date), education, district and deadline.
@@ -55,9 +57,11 @@ Each scenario lists the steps and then what you should see.
 
 **Expected:** the second upload says *আগেই ইনজেস্ট করা হয়েছে* and links to the first run. No second circular is created.
 
+**Then:** reject the first run's circular in `/admin/review`, so the fictional notice never goes live.
+
 ### 8. Double-click Apply / Save
 
-Double-click **আবেদন ট্র্যাক করুন** or the bookmark icon.
+Double-click **ট্র্যাকারে যোগ করুন** or the bookmark icon.
 
 **Expected:** one tracker card and one bookmark. The second click replays the first result (idempotency key) or shows *এটি আগেই সেভ করা আছে*.
 
@@ -98,12 +102,17 @@ As a guest, run more than 3 AI searches in one day.
 
 ### 14. Workflow mid-step failure (A07)
 
-1. On `/admin/ingest`, open *Advanced*, choose **notify_matches** as the step to fail, and ingest new text.
+1. On `/admin/ingest`, open *Advanced*, choose **ড্রাফট তৈরি** (`create_draft`) as the step to fail, and ingest new text or a sample you have not used yet.
 2. Press **আবার চেষ্টা করুন** on the failed step.
+3. Reject the circular in `/admin/review`.
 
-**Expected after step 1:** the earlier steps are green and `notify_matches` has 3 attempts and has failed.
+**Expected after step 1:** the earlier steps are green, and `create_draft` has 3 attempts and has failed.
 
-**Expected after step 2:** the run completes, there is one circular, and there are no duplicate notifications.
+**Expected after step 2:** only that step runs, one draft exists, and the run waits at review.
+
+**Expected after step 3:** the run closes and nothing is published.
+
+**Variant after publishing:** with a real circular, fail **মিলে যাওয়া প্রার্থীদের জানানো** (`notify_matches`) instead, then approve it at review and Retry the failed step. The run completes with one circular and no duplicate notifications. The integration test runs this exact scenario.
 
 ### 15. Corrigendum
 

@@ -11,7 +11,8 @@ export async function generateMetadata({ params }: PageProps<"/jobs/[slug]">): P
   const { slug } = await params;
   const c = await publicCircularForSeo(slug);
   const url = `${siteUrl()}/jobs/${slug}`;
-  if (!c) return { title: t("common.seeDetails"), alternates: { canonical: url } };
+  // Unknown or unpublished circular: the page shows "not found"; keep it out of search engines.
+  if (!c) return { title: t("states.notFoundTitle"), robots: { index: false, follow: true } };
   const description = `${c.organization.nameBn} · মোট ${toBnDigits(c.totalVacancies)}টি পদ · আবেদনের শেষ সময় ${formatDateBn(c.endAt)}। যোগ্যতা যাচাই করুন ও ATS রিজিউমে বানান।`;
   return {
     title: c.titleBn,

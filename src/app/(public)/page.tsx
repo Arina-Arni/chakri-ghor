@@ -71,12 +71,12 @@ export default function LandingPage() {
       </section>
 
       <section className="container-page py-12" aria-labelledby="cta-title">
-        <div className="flex flex-col items-start gap-4 rounded-2xl bg-primary p-8 text-white md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col items-start gap-4 rounded-2xl bg-primary p-8 text-primary-foreground md:flex-row md:items-center md:justify-between">
           <div>
             <h2 id="cta-title" className="text-2xl font-bold">
               {t("landing.ctaTitle")}
             </h2>
-            <p className="mt-1 text-white/90">{t("landing.ctaBody")}</p>
+            <p className="mt-1 text-primary-foreground/90">{t("landing.ctaBody")}</p>
           </div>
           <Button asChild variant="hero" size="lg">
             <Link href="/signup">{t("landing.ctaButton")}</Link>

@@ -43,11 +43,11 @@ export function JobListSkeleton({ count = 4, compact = false }: { count?: number
   );
 }
 
-export function StatTilesSkeleton({ count = 3 }: { count?: number }) {
+export function StatTilesSkeleton({ count = 3, className, tileClassName }: { count?: number; className?: string; tileClassName?: string }) {
   return (
-    <LoadingRegion className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+    <LoadingRegion className={cn("grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5", className)}>
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="rounded-xl border bg-surface p-4">
+        <div key={i} className={cn("rounded-xl border bg-surface p-4", tileClassName)}>
           <Skeleton className="h-8 w-16" />
           <Skeleton className="mt-2 h-4 w-24" />
         </div>

@@ -21,10 +21,17 @@ import { onSessionExpired } from "@/lib/events";
  * Opens when a request reports an expired session. Drafts live in localStorage,
  * so logging in again (in a new tab or here) keeps them.
  */
+/** Sign-in pages report "wrong password" as UNAUTHENTICATED; that is not an expired session. */
+const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/reset-password", "/check-email"];
+
 function SessionExpiredDialogInner() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  useEffect(() => onSessionExpired(() => setOpen(true)), []);
+  const onAuthPage = AUTH_PAGES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  useEffect(() => {
+    if (onAuthPage) return;
+    return onSessionExpired(() => setOpen(true));
+  }, [onAuthPage]);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>

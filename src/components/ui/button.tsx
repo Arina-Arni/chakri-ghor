@@ -15,10 +15,10 @@ const buttonVariants = cva(
         outline:
           "border-input/60 bg-surface text-ink hover:bg-muted aria-expanded:bg-muted",
         ghost: "text-ink hover:bg-muted aria-expanded:bg-muted",
-        destructive: "bg-danger text-white shadow-card hover:bg-[#991b1b]",
-        "destructive-soft": "bg-danger-soft text-danger hover:bg-[#fecaca]",
+        destructive: "bg-danger text-on-solid shadow-card hover:bg-[#991b1b] dark:hover:bg-[#fca5a5]",
+        "destructive-soft": "bg-danger-soft text-danger hover:bg-[#fecaca] dark:hover:bg-[rgb(248_113_113/0.25)]",
         link: "h-auto px-0 text-primary underline-offset-4 hover:underline",
-        hero: "bg-white text-hero hover:bg-primary-soft",
+        hero: "bg-white text-hero hover:bg-primary-soft dark:hover:bg-[#dbe7f3]",
       },
       size: {
         default: "h-11 px-4",

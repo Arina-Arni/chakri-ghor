@@ -9,10 +9,13 @@ export type GenerateRequest = {
   document?: { mimeType: string; dataBase64: string };
   /** JSON Schema for structured output. */
   jsonSchema?: Record<string, unknown>;
+  /** false = answer without "thinking" first: ~1 s instead of 6–14 s on newer Gemini models. */
+  thinking?: boolean;
   signal: AbortSignal;
 };
 
-export type GenerateResponse = { text: string; inputTokens?: number; outputTokens?: number };
+/** `model`: the model that actually answered, when the provider falls back between models. */
+export type GenerateResponse = { text: string; inputTokens?: number; outputTokens?: number; model?: string };
 
 export interface AiProvider {
   readonly model: string;

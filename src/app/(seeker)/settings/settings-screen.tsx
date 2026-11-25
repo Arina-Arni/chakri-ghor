@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +23,7 @@ import { changeEmail, changePassword, deleteAccount, exportMyData, getSettings, 
 import { useData } from "@/hooks/use-data";
 import { newIdempotencyKey, useMutation } from "@/hooks/use-mutation";
 import { t } from "@/i18n";
+import { leaveTo } from "@/lib/events";
 import { applyServerErrors } from "@/lib/form";
 import { changeEmailSchema, changePasswordSchema } from "@/schemas/seeker";
 import type { Settings } from "@/types";
@@ -134,7 +134,6 @@ function NotificationSwitches() {
 
 export function SettingsScreen() {
   const { me } = useSession();
-  const router = useRouter();
   const [emailOpen, setEmailOpen] = useState(false);
   const [logoutAll, setLogoutAll] = useState(false);
   const [del, setDel] = useState(false);
@@ -223,7 +222,8 @@ export function SettingsScreen() {
           setDelPending(false);
           if (r.ok) {
             toast.success(t("settings.deleted"));
-            router.push("/");
+            // Full page load, not router.push: see leaveTo().
+            leaveTo("/");
           } else toast.error(r.error.message_bn);
         }}
       >

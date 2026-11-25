@@ -2,14 +2,15 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { PageSkeleton } from "@/components/feedback/skeletons";
 import { useSession } from "@/components/providers/session-provider";
 import { t } from "@/i18n";
+import { isLeaving, leaveTo } from "@/lib/events";
 import type { Role } from "@/types";
 
 /**
@@ -17,13 +18,27 @@ import type { Role } from "@/types";
  * signed-in users without the role see a "no access" message. Part 2 enforces this on the server.
  */
 function RequireRoleInner({ roles, children }: { roles: Role[]; children: React.ReactNode }) {
-  const { status, role } = useSession();
-  const router = useRouter();
+  const { status, role, verify } = useSession();
   const pathname = usePathname();
+  // The server gate already let this request through, so a client-side "guest" may just be
+  // stale (e.g. right after login). Re-check once before bouncing to /login.
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
-    if (status === "ready" && role === "guest") router.replace(`/login?next=${encodeURIComponent(pathname)}`);
-  }, [status, role, router, pathname]);
+    if (status !== "ready" || role !== "guest" || isLeaving()) return;
+    if (!verified) {
+      let alive = true;
+      void verify().then(() => {
+        if (alive) setVerified(true);
+      });
+      return () => {
+        alive = false;
+      };
+    }
+    // Full page load instead of router.replace: a client navigation here can race another one
+    // (logout, a link) and leave the router queue stuck, so the next login never gets sent.
+    leaveTo(`/login?next=${encodeURIComponent(pathname)}`);
+  }, [status, role, verified, verify, pathname]);
 
   if (status === "loading" || role === "guest") return <PageSkeleton />;
   if (!roles.includes(role)) {

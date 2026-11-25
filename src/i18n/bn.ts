@@ -8,6 +8,10 @@ export const bn = {
     tagline: "সব চাকরির খবর, এক রাডারে",
     logoAlt: "চাকরি রাডার — হোম",
   },
+  theme: {
+    toDark: "ডার্ক মোড চালু করুন",
+    toLight: "লাইট মোড চালু করুন",
+  },
   common: {
     loading: "লোড হচ্ছে…",
     retry: "আবার চেষ্টা করুন",
@@ -484,6 +488,7 @@ export const bn = {
     facetSearch: "{label} খুঁজুন",
   },
   jobCard: {
+    variousPlaces: "বিভিন্ন স্থানে",
     verified: "যাচাইকৃত",
     unverified: "যাচাই হয়নি",
     posted: "প্রকাশ: {when}",
@@ -513,6 +518,8 @@ export const bn = {
     grade: "গ্রেড",
     fee: "আবেদন ফি",
     noFee: "ফি নেই",
+    /** Fee not recorded: unknown is not the same as free. */
+    feeSeeNotice: "মূল বিজ্ঞপ্তি দেখুন",
     sectionDescription: "পদের বিবরণ",
     sectionEligibility: "যোগ্যতা",
     sectionHowToApply: "যেভাবে আবেদন করবেন",
@@ -616,7 +623,6 @@ export const bn = {
     loggedIn: "লগইন হয়েছে",
     loggedOut: "লগআউট হয়েছে",
     backToLogin: "লগইনে ফিরুন",
-    demoHint: "ডেমো: যেকোনো ইমেইল ও ৮+ অক্ষরের পাসওয়ার্ড দিন। ‘ratelimit@test.com’ দিলে রেট-লিমিট দেখাবে।",
   },
   onboarding: {
     title: "প্রোফাইল তৈরি করুন",
@@ -1070,6 +1076,18 @@ export const bn = {
       colStarted: "শুরু",
       colDuration: "সময়",
       noRuns: "এখনও কোনো রান নেই",
+      ttTitle: "Teletalk-এ বেসরকারি চাকরি",
+      ttBody: "Teletalk-এর বেসরকারি চাকরির তালিকা সরাসরি দেখা হয়। কোনোটা ইনজেস্ট করলে স্বাভাবিক নিয়মে AI পড়া, রিভিউ ও প্রকাশের ধাপ দিয়ে যাবে।",
+      ttRecheck: "আবার দেখুন",
+      ttOpen: "Teletalk-এ খুলুন",
+      ttUnavailable: "এখন Teletalk-এ পৌঁছানো যাচ্ছে না। একটু পরে আবার দেখুন।",
+      ttEmpty: "এখন Teletalk-এ কোনো বেসরকারি চাকরি নেই।",
+      ttCount: "Teletalk-এ {n}টি বেসরকারি চাকরি আছে",
+      ttDeadline: "শেষ তারিখ: {date}",
+      ttUse: "ইনজেস্ট করুন",
+      ttNoPdf: "PDF নেই — Teletalk-এ দেখুন",
+      ttChecked: "শেষ দেখা হয়েছে {when}",
+      ttFilled: "PDF লিংক বসানো হয়েছে — এবার “প্রক্রিয়া শুরু করুন” চাপুন",
     },
     workflow: {
       title: "ওয়ার্কফ্লো রান {id}",

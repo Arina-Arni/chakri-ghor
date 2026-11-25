@@ -322,7 +322,6 @@ export function CvExperienceForm({ formId, profile, onSubmit, draftKey, showCv =
           {aiFields.length > 0 && (
             <Notice tone="ai" live title={t("onboarding.cvSuccess")} action={<Button size="sm" variant="secondary" onClick={() => setAiFields([])}><CheckCheck aria-hidden />{t("onboarding.cvAllGood")}</Button>} />
           )}
-          <p className="text-sm text-muted-foreground">ডেমো: ফাইলের নামে “scan” থাকলে পড়া ব্যর্থ হবে, “locked” থাকলে পাসওয়ার্ড-সুরক্ষিত PDF দেখাবে।</p>
         </section>
       )}
 
@@ -562,8 +561,8 @@ export function CompletenessRing({ pct, size = 96 }: { pct: number; size?: numbe
   return (
     <div role="img" aria-label={`${t("onboarding.completeness")}: ${toBnDigits(pct)}%`} className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} aria-hidden>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e2e8f0" strokeWidth={8} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#0f766e" strokeWidth={8} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#d3dfeb" strokeWidth={8} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#3a5a7c" strokeWidth={8} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
       </svg>
       <span className={cn("absolute inset-0 grid place-items-center font-bold tabular-nums")} aria-hidden>{toBnDigits(pct)}%</span>
     </div>

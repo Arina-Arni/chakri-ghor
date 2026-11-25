@@ -97,7 +97,7 @@ function MiniCalendar({ selected, onPick }: { selected: Ymd | null; onPick: (v: 
               className={cn(
                 "grid size-9 place-items-center rounded-md text-sm tabular-nums hover:bg-primary-soft",
                 same(today, c) && "font-bold text-primary",
-                same(selected, c) && "bg-primary text-white hover:bg-primary-hover",
+                same(selected, c) && "bg-primary text-primary-foreground hover:bg-primary-hover",
               )}
             >
               {toBnDigits(c.d)}

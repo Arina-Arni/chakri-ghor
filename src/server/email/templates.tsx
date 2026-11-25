@@ -29,13 +29,13 @@ function Mail({ template, title, body, href }: { template: EmailTemplate; title:
       <Preview>{title}</Preview>
       <Body style={{ backgroundColor: "#f6f7f9", fontFamily: "'Hind Siliguri', 'Noto Sans Bengali', Arial, sans-serif", margin: 0 }}>
         <Container style={{ backgroundColor: "#ffffff", borderRadius: 12, margin: "24px auto", maxWidth: 520, padding: 24 }}>
-          <Text style={{ color: "#0f766e", fontSize: 14, fontWeight: 700, margin: 0 }}>চাকরি রাডার</Text>
+          <Text style={{ color: "#3a5a7c", fontSize: 14, fontWeight: 700, margin: 0 }}>চাকরি রাডার</Text>
           <Heading as="h1" style={{ color: "#111827", fontSize: 20, lineHeight: "28px", margin: "12px 0" }}>
             {title}
           </Heading>
           <Text style={{ color: "#374151", fontSize: 16, lineHeight: "26px" }}>{body}</Text>
           <Section style={{ margin: "20px 0" }}>
-            <Button href={href} style={{ backgroundColor: "#0f766e", borderRadius: 8, color: "#ffffff", fontSize: 16, fontWeight: 600, padding: "12px 20px" }}>
+            <Button href={href} style={{ backgroundColor: "#3a5a7c", borderRadius: 8, color: "#ffffff", fontSize: 16, fontWeight: 600, padding: "12px 20px" }}>
               {CTA[template]}
             </Button>
           </Section>

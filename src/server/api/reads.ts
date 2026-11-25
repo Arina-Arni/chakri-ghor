@@ -7,6 +7,7 @@ import type { Db } from "@/server/db/client";
 import * as account from "@/server/services/account";
 import * as admin from "@/server/services/admin";
 import * as aiHealth from "@/server/services/ai-health";
+import * as teletalkPrivate from "@/server/services/teletalk-private";
 import * as workflows from "@/server/services/workflows";
 import * as applications from "@/server/services/applications";
 import * as billing from "@/server/services/billing";
@@ -82,6 +83,7 @@ export const READS: Record<string, Handler> = {
   getWorkflowRun: h(oneId, (ctx, db, [id]) => workflows.getWorkflowRun(ctx, db, id)),
   getAiHealth: h(z.tuple([z.enum(["24h", "7d"])]), (ctx, db, [period]) => aiHealth.getAiHealth(ctx, db, period)),
   getFaultInjection: h(none, (ctx, db) => aiHealth.getFaultInjection(ctx, db)),
+  listTeletalkPrivateJobs: h(none, (ctx) => teletalkPrivate.listTeletalkPrivateJobs(ctx)),
 
   // admin only
   listUsers: h(z.tuple([z.object({ q: z.string().max(100).optional(), role: z.string().max(20).optional() }).optional()]), (ctx, db, [f]) =>

@@ -29,6 +29,8 @@ export type CallOptions<T, F> = {
   prompt: { system: string; user: string; document?: { mimeType: string; dataBase64: string } };
   schema: ZodType<T>;
   jsonSchema?: Record<string, unknown>;
+  /** false for quick structured tasks: no model "thinking", much faster and cheaper. */
+  thinking?: boolean;
   /** Total time budget, including retries. */
   budgetMs: number;
   /** Per-attempt timeout (defaults to the remaining budget). */
@@ -88,10 +90,10 @@ async function faulted(mode: FaultMode, signal: AbortSignal): Promise<string> {
 
 export function createAiClient(deps: AiDeps) {
   async function attempt(
-    opts: { user: string; system: string; document?: { mimeType: string; dataBase64: string }; jsonSchema?: Record<string, unknown> },
+    opts: { user: string; system: string; document?: { mimeType: string; dataBase64: string }; jsonSchema?: Record<string, unknown>; thinking?: boolean },
     timeoutMs: number,
     fault: FaultMode | null,
-  ): Promise<{ text: string; inputTokens?: number; outputTokens?: number }> {
+  ): Promise<{ text: string; inputTokens?: number; outputTokens?: number; model?: string }> {
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<never>((_, reject) => {
@@ -114,7 +116,7 @@ export function createAiClient(deps: AiDeps) {
   return async function callAI<T, F>(o: CallOptions<T, F>): Promise<CallResult<T, F>> {
     const started = deps.now();
     const deadline = started + o.budgetMs;
-    const model = deps.provider?.model ?? "none";
+    let model = deps.provider?.model ?? "none";
     const cacheKey = o.cacheTtlMs ? await deps.sha256(`${o.feature}\n${PROMPT_VERSION}\n${stable(o.input)}`) : null;
     let attempts = 0;
     let inputTokens: number | undefined;
@@ -170,8 +172,9 @@ export function createAiClient(deps: AiDeps) {
       attempts++;
       let text: string;
       try {
-        const r = await attempt({ system: o.prompt.system, user, document: o.prompt.document, jsonSchema: o.jsonSchema }, Math.min(o.attemptTimeoutMs ?? remaining, remaining), fault);
+        const r = await attempt({ system: o.prompt.system, user, document: o.prompt.document, jsonSchema: o.jsonSchema, thinking: o.thinking }, Math.min(o.attemptTimeoutMs ?? remaining, remaining), fault);
         text = r.text;
+        if (r.model) model = r.model;
         inputTokens = (inputTokens ?? 0) + (r.inputTokens ?? 0) || undefined;
         outputTokens = (outputTokens ?? 0) + (r.outputTokens ?? 0) || undefined;
       } catch (e) {

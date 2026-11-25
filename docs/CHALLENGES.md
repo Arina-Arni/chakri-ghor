@@ -75,7 +75,7 @@ A call goes through these stages in order:
 
 1. Log in with the **admin test account** (shared privately). The server runs with `FAULT_INJECTION_ALLOWED=true`.
 2. Open `/admin/ai-health`. Under fault injection, pick a feature (for example *AI সার্চ*) and a mode (for example *টাইমআউট* or *ভাঙা JSON*), then enable it. It affects **only this admin's requests** and expires after 15 minutes. The action is written to the audit log.
-3. Go to `/jobs`, switch on AI mode and search `খুলনায় সরকারি চাকরি`. The results still appear, the chips come from the rule-based parser, and the UI shows a plain-Bangla notice that the simple search was used. With *টাইমআউট*, this happens within the 4-second budget.
+3. Go to `/jobs`, switch on AI mode and search `ঢাকায় সরকারি অফিসের চাকরি`. The results still appear, the chips come from the rule-based parser, and the UI shows a plain-Bangla notice that the simple search was used. With *টাইমআউট*, this happens within the 4-second budget.
 4. Back on `/admin/ai-health`, the failure appears in "last 50 failures" with its outcome, attempts and latency, and the success and fallback percentages update. After 5 failed calls the breaker turns **open**. About 30 s later it allows one probe and closes again once the fault is turned off.
 5. Repeat with *সিভি পড়া* on `/profile` (CV upload) and *রিজিউমে সাজানো* on a resume (Tailor). Each falls back: regex CV extraction, and template tailoring with a deterministic ATS score.
 6. Log in as the seeker in another browser while the fault is on. Their AI search still uses the AI, because injection is scoped to the admin.
@@ -148,12 +148,23 @@ All of these are in `tests/integration/part3.test.ts`, run on real Postgres:
 
 ### Reproducing the judges' test on the live site
 
+The live site shows real circulars only. Auto-publish is off, so every run stops at **মানুষের রিভিউ** (`waiting_review`) until a moderator decides. The PDFs in `samples/` are fictional; **reject** them at review so they never go live.
+
 1. Log in as the **admin test account** and open `/admin/ingest`.
-2. **Normal run.** Upload `samples/notice-text.pdf` and watch `/admin/workflows/<id>`. Every step runs, then the run stops at **মানুষের রিভিউ** (`waiting_review`). Approve it in `/admin/review`, and the run continues through publish and notify.
-3. **Duplicate.** Upload `samples/notice-text-copy.pdf` (same bytes). The page reports *এই সার্কুলার আগেই ইনজেস্ট করা হয়েছে*, with a link to the existing run.
-4. **Mid-step failure.** Upload a different file (for example `samples/notice-scanned.pdf`, or paste text). Open *Advanced*, choose **মিলে যাওয়া প্রার্থীদের জানানো** (`notify_matches`) as the step to fail, and start. All earlier steps turn green; `notify_matches` shows 3 attempts and the run is **ব্যর্থ**.
-5. Press **আবার চেষ্টা করুন** on the failed step. Only that step runs and the run finishes. The circular exists once (`/admin/circulars`), and the seeker test account has exactly one *নতুন মিল* notification for it.
-6. A ready-made failed run is also seeded: open `/admin/ingest`, choose the run named *স্বাস্থ্য অধিদপ্তর — নমুনা (notify ব্যর্থ)* and press Retry.
+2. **Normal run.** Upload a real, open circular PDF that is not on the site yet (for example from `alljobs.teletalk.com.bd`) and watch `/admin/workflows/<id>`. Every step runs, then the run stops at review. Approve it in `/admin/review`, and the run continues through publish and notify.
+3. **Duplicate.** Upload the same PDF again. The page reports *এই সার্কুলার আগেই ইনজেস্ট করা হয়েছে*, with a link to the existing run. `samples/notice-text.pdf` and `samples/notice-text-copy.pdf` (same bytes) show the same thing with fictional data.
+4. **Mid-step failure.**
+   1. Upload a sample you have not used yet (for example `samples/notice-text.pdf`), or paste new circular text.
+   2. Open *Advanced*, choose **ড্রাফট তৈরি** (`create_draft`) as the step to fail, and start.
+
+   All earlier steps turn green, `create_draft` shows 3 attempts, and the run is **ব্যর্থ**.
+5. Press **আবার চেষ্টা করুন** on the failed step. Only that step runs: the draft is created once and the run waits at review. Reject it in `/admin/review`. The run closes and nothing is published.
+6. **Failure after publishing.**
+   1. With another real circular, choose **মিলে যাওয়া প্রার্থীদের জানানো** (`notify_matches`) as the step to fail.
+   2. Approve the circular at review.
+   3. After the step fails, press Retry.
+
+   The circular exists once (`/admin/circulars`), and a matching seeker gets exactly one *নতুন মিল* notification. `tests/integration/part3.test.ts` runs the same scenario on every CI build.
 
 ### Limitations
 

@@ -24,15 +24,23 @@ export const metadata: Metadata = {
   applicationName: t("brand.name"),
 };
 
-export const viewport: Viewport = { themeColor: "#0f766e", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#3a5a7c" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1b2e" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="bn" className={`${hind.variable} ${inter.variable} antialiased`}>
+    // suppressHydrationWarning: next-themes sets the theme class on <html> before React hydrates.
+    <html lang="bn" className={`${hind.variable} ${inter.variable} antialiased`} suppressHydrationWarning>
       <body className="min-h-dvh">
         <a
           href="#main"
-          className="sr-only z-[70] rounded-lg bg-primary px-4 py-3 font-semibold text-white focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+          className="sr-only z-[70] rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
         >
           {t("common.skipToContent")}
         </a>

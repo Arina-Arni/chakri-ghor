@@ -14,7 +14,9 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { signIn, signInWithGoogle } from "@/data";
 import { useMutation } from "@/hooks/use-mutation";
 import { t } from "@/i18n";
+import { useSession } from "@/components/providers/session-provider";
 import { flattenErrors } from "@/lib/form";
+import { safeNext } from "@/lib/safe-next";
 import { loginSchema, type LoginInput } from "@/schemas/auth";
 import { GoogleIcon } from "../google-icon";
 
@@ -24,12 +26,23 @@ export function LoginForm() {
   const next = sp.get("next");
   const [rateLimited, setRateLimited] = useState<number | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [navigating, setNavigating] = useState(false);
+  const session = useSession();
   const form = useForm<LoginInput>({ resolver: zodResolver(loginSchema), defaultValues: { email: "", password: "" }, mode: "onTouched" });
   const { errors, isSubmitted } = form.formState;
 
   const done = (onboarded: boolean, role: string) => {
     toast.success(t("auth.loggedIn"));
-    router.push(next && next.startsWith("/") ? next : role === "admin" || role === "moderator" ? "/admin" : onboarded ? "/dashboard" : "/onboarding");
+    // Next keeps this page alive (hidden) after navigating away; don't leave the password in it.
+    form.resetField("password");
+    setNavigating(true);
+    const target = safeNext(next, role === "admin" || role === "moderator" ? "/admin" : onboarded ? "/dashboard" : "/onboarding");
+    // Wait until the client session knows the user, otherwise the protected page sees a
+    // stale "guest" and bounces straight back to /login.
+    void session
+      .verify()
+      .catch(() => {})
+      .then(() => router.push(target));
   };
   const login = useMutation((k: string, v: LoginInput) => signIn(v.email, v.password, k), {
     toastError: false,
@@ -44,7 +57,7 @@ export function LoginForm() {
   const summary = isSubmitted ? flattenErrors(errors, (p) => (p === "email" ? t("auth.email") : t("auth.password"))) : [];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold">{t("auth.loginTitle")}</h1>
         <p className="text-muted-foreground">{t("auth.loginSub")}</p>
@@ -74,12 +87,13 @@ export function LoginForm() {
         <Field id="password" label={t("auth.password")} required error={errors.password?.message}>
           <PasswordInput autoComplete="current-password" {...form.register("password")} />
         </Field>
-        <div className="flex justify-end">
+        {/* Negative margin: keeps the 44px tap target without adding a full row of space. */}
+        <div className="-my-2 flex justify-end">
           <Link href="/forgot-password" className="inline-flex min-h-11 items-center font-medium text-primary hover:underline">
             {t("auth.forgot")}
           </Link>
         </div>
-        <Button type="submit" size="lg" className="w-full" loading={login.pending} disabled={rateLimited != null && login.pending}>
+        <Button type="submit" className="w-full" loading={login.pending || navigating} disabled={rateLimited != null && login.pending}>
           {t("auth.loginButton")}
         </Button>
       </form>
@@ -88,7 +102,7 @@ export function LoginForm() {
         {t("common.or")}
         <span className="h-px flex-1 bg-border" />
       </div>
-      <Button variant="secondary" size="lg" className="w-full" loading={google.pending} onClick={() => void google.run()}>
+      <Button variant="secondary" className="w-full" loading={google.pending} onClick={() => void google.run()}>
         <GoogleIcon />
         {t("auth.google")}
       </Button>
@@ -98,7 +112,6 @@ export function LoginForm() {
           {t("nav.signup")}
         </Link>
       </p>
-      <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">{t("auth.demoHint")}</p>
     </div>
   );
 }

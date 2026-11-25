@@ -9,7 +9,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           <h1>কিছু একটা সমস্যা হয়েছে</h1>
           <p>আমরা পেজটি দেখাতে পারিনি। একটু পর আবার চেষ্টা করুন।</p>
           <p>রেফারেন্স: {error.digest ?? "ERR-ROOT"}</p>
-          <button onClick={reset} style={{ minHeight: 44, padding: "0 16px", borderRadius: 10, border: 0, background: "#0f766e", color: "#fff" }}>
+          <button onClick={reset} style={{ minHeight: 44, padding: "0 16px", borderRadius: 10, border: 0, background: "#3a5a7c", color: "#fff" }}>
             আবার চেষ্টা করুন
           </button>
         </main>

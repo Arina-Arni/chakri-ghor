@@ -24,7 +24,7 @@ Each rubric line maps to the feature that covers it, the file paths, and how to 
 | **M06 · Failure & recovery (3)** | AI fallbacks, email outbox, resumable workflows, error boundaries, drafts | `src/lib/ai/client.ts`, `src/server/email/outbox.ts`, `src/lib/workflow/engine.ts` | `docs/CHALLENGES.md` reproduction steps |
 | **M07 · Responsive (2)** | Mobile-first layouts (360 px and up) | `src/app/**`, `docs/UI.md` screenshots | Resize to 360 px; screenshots in `docs/UI.md` |
 | **M07 · Keyboard & semantics (1)** | Landmarks, skip link, focus management, `aria-live`, keyboard-operable tracker | `src/components/**`, `tests/e2e/keyboard.spec.ts` | Tab through `/jobs` and `/onboarding` |
-| **M07 · Validation feedback (1)** | Inline Bangla errors, error summary, toasts | `src/components/forms/*`, `src/i18n/bn.ts` | Submit an empty form |
+| **M07 · Validation feedback (1)** | Inline Bangla errors, error summary, toasts | `src/components/ui/field.tsx`, `src/components/ui/sonner.tsx`, `src/components/profile/profile-forms.tsx`, `src/i18n/bn.ts` | Submit an empty form |
 | **M08 · Live deployment (2)** | Vercel + Supabase (+ pg_cron) | `README.md` → Deployment | Live URL in `docs/SUBMISSION.md` |
 | **M08 · Repo & setup docs (2)** | README + `docs/` | `README.md`, `docs/*.md` | — |
 | **A06 · External API & Fault Tolerance (20)** | One AI client: timeouts, retries, breaker, repair, semantic checks, cache, quotas, fault injection, observability | `src/lib/ai/*`, `src/server/ai/*`, `src/domain/ai-guard`, `/admin/ai-health` | `docs/CHALLENGES.md#a06`; `tests/unit/ai-client.test.ts` (23 tests) |

@@ -24,7 +24,7 @@ function ListEditor({ items, onChange, label, addLabel }: { items: string[]; onC
         </li>
       ))}
       <li>
-        <button type="button" onClick={() => onChange([...items, "New item"])} className="inline-flex min-h-6 items-center gap-0.5 rounded px-1 text-[12px] text-teal-700 hover:bg-teal-50">
+        <button type="button" onClick={() => onChange([...items, "New item"])} className="inline-flex min-h-6 items-center gap-0.5 rounded px-1 text-[12px] text-primary hover:bg-primary-soft">
           <Plus className="size-3" aria-hidden />
           <span lang="bn">{addLabel}</span>
         </button>
@@ -41,7 +41,7 @@ export function ResumePreview({ content: c, update }: { content: ResumeContent; 
       <article
         lang="en"
         aria-label={t("resume.previewLabel")}
-        className="mx-auto aspect-[1/1.414] w-full max-w-[720px] min-w-[300px] bg-white p-5 font-latin text-[13px] leading-relaxed text-slate-800 shadow-raised sm:p-10"
+        className="mx-auto aspect-[1/1.414] paper w-full max-w-[720px] min-w-[300px] bg-white p-5 font-latin text-[13px] leading-relaxed text-slate-800 shadow-raised sm:p-10"
       >
         <header className="text-center">
           <InlineText as="p" value={c.contact.fullName} label="Full name" className="text-2xl font-bold text-slate-900" onSave={(v) => update((x) => ({ ...x, contact: { ...x.contact, fullName: v } }))} />
@@ -88,7 +88,7 @@ export function ResumePreview({ content: c, update }: { content: ResumeContent; 
                 </li>
               ))}
               <li className="list-none">
-                <button type="button" onClick={() => update((x) => ({ ...x, experience: x.experience.map((y, j) => (j === i ? { ...y, bullets: [...y.bullets, "Describe an achievement"] } : y)) }))} className="inline-flex min-h-6 items-center gap-0.5 rounded px-1 text-[12px] text-teal-700 hover:bg-teal-50">
+                <button type="button" onClick={() => update((x) => ({ ...x, experience: x.experience.map((y, j) => (j === i ? { ...y, bullets: [...y.bullets, "Describe an achievement"] } : y)) }))} className="inline-flex min-h-6 items-center gap-0.5 rounded px-1 text-[12px] text-primary hover:bg-primary-soft">
                   <Plus className="size-3" aria-hidden />
                   <span lang="bn">{t("resume.addBullet")}</span>
                 </button>

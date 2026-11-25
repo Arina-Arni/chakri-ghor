@@ -23,7 +23,7 @@ export function setAiForTests(o: typeof overrides): void {
 export function ai(): CallAI {
   if (client) return client;
   const env = integrationEnv();
-  const provider = overrides && "provider" in overrides ? (overrides.provider ?? null) : env.GEMINI_API_KEY ? new GeminiProvider(env.GEMINI_API_KEY, env.GEMINI_MODEL) : null;
+  const provider = overrides && "provider" in overrides ? (overrides.provider ?? null) : env.GEMINI_API_KEY ? new GeminiProvider(env.GEMINI_API_KEY, [env.GEMINI_MODEL, ...env.GEMINI_FALLBACK_MODELS]) : null;
   client = createAiClient({
     provider,
     store: overrides?.store ?? new DbAiStore(),
