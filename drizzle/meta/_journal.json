@@ -29,6 +29,13 @@
       "when": 1795451957614,
       "tag": "0003_part3_supabase",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795608119210,
+      "tag": "0004_account_delete_events",
+      "breakpoints": true
     }
   ]
 }
