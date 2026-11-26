@@ -106,7 +106,7 @@ Each step is `(ctx) => StepResult`. The result is one of `succeeded(output, next
 - **Triggers.**
   - Next.js `after()`, right after a run is created.
   - `/api/cron/worker` every minute, called by Supabase `pg_cron` + `pg_net` with `CRON_SECRET`, compared in constant time (`npm run db:cron` schedules it).
-  - The admin "Run now" action.
+  - An admin action on a run's page (**Retry failed step**, **Resume from step**, **Skip step**, **Edit extracted data & continue**). It starts the worker for that run at once, again through `after()`.
 - **Compensation.** Cancelling after `create_draft` soft-deletes the draft. A published circular is never unpublished because notifications failed.
 
 ### The ingestion steps
