@@ -148,7 +148,7 @@ npm run e2e               # Playwright; needs E2E_BASE_URL + E2E_* credentials o
    - delayed workflow retries
    - the email outbox
 
-   A new ingest still runs at once, and admins can press **Run now**. A variable already set in the shell wins over `.env.local`:
+   A new ingest still runs at once. On a run's page, **Retry**, **Resume from step**, **Skip** and **Edit & continue** also run it at once. A variable already set in the shell wins over `.env.local`:
 
    ```bash
    APP_URL=https://<your-app>.vercel.app npm run db:cron            # bash
