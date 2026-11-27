@@ -99,7 +99,15 @@ npm run dev
 
 `db:seed` adds sample circulars, demo workflow runs and one demo user per role, and writes the demo logins to the git-ignored `.seed-credentials.local.md`. Run it only on a database you use for development. **Never run it against the production database:** the live site shows real circulars only. To try the app without Supabase, `npm run db:local` starts a throwaway seeded Postgres instead.
 
-**Test accounts are provided privately to the judges.**
+## Test accounts (for judges)
+
+| Role | Email | Password |
+|---|---|---|
+| Job seeker |  arniarina40+judge1@gmail.com  | userpassword |
+ 
+| Admin (A06 fault injection, A07 workflow) | arniarina40+judge2@gmail.com  | userpassword2 |
+
+Demo accounts for judging only. Please do not change their passwords.
 
 ### Environment variables
 
